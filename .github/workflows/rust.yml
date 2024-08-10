@@ -1,0 +1,21 @@
+name: Rust Build and Test
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Install Rust
+        uses: actions-rust/install-rust@v1
+        with:
+          toolchain: stable
+
+      - name: Build
+        run: cargo build

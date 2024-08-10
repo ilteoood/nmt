@@ -14,7 +14,7 @@ impl Configurations {
 
     pub fn new(base_directory: Option<String>) -> Configurations {
         let base_directory = base_directory
-            .or_else(|| Configurations::retrieve_current_working_directory())
+            .or_else(Configurations::retrieve_current_working_directory)
             .unwrap();
 
         Configurations {

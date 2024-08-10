@@ -1,10 +1,10 @@
 use std::{fs::metadata, path::PathBuf};
 
+use crate::configurations::Configurations;
 use glob::{glob_with, MatchOptions};
 use remove_empty_subdirs::remove_empty_subdirs;
-use crate::configurations::Configurations;
 
-static DEFAULT_PATHS: &'static [&str] = &[
+static DEFAULT_PATHS: &[&str] = &[
     // folders
     "@types",
     ".github",
@@ -42,7 +42,10 @@ fn generate_default_paths(configurations: &Configurations) -> Vec<String> {
     let mut paths: Vec<String> = vec![];
 
     for default_path in DEFAULT_PATHS {
-        let join = configurations.node_modules_location.join("**").join(default_path);
+        let join = configurations
+            .node_modules_location
+            .join("**")
+            .join(default_path);
         paths.push(join.to_str().unwrap().to_string());
     }
 
@@ -62,11 +65,11 @@ fn delete_path(path: PathBuf) {
 
     match remove_result {
         Ok(_) => println!("Removed: {}", path_location),
-        Err(_) => println!("Failed to remove: {}", path_location)
+        Err(_) => println!("Failed to remove: {}", path_location),
     }
 }
 
-fn clean_content (configurations: &Configurations) {
+fn clean_content(configurations: &Configurations) {
     let glob_options = MatchOptions {
         case_sensitive: false,
         require_literal_separator: false,
@@ -74,11 +77,13 @@ fn clean_content (configurations: &Configurations) {
     };
 
     for path in generate_default_paths(configurations) {
-        for entry in glob_with(&path, glob_options).expect(&format!("Failed to clean glob pattern: {}", path)) {
+        for entry in glob_with(&path, glob_options)
+            .unwrap_or_else(|_| panic!("Failed to clean glob pattern: {}", path))
+        {
             match entry {
                 Ok(path) => delete_path(path),
                 Err(glob_error) => {
-                    println!("Failed to clean glob pattern {}: {}", path, glob_error.to_string());
+                    println!("Failed to clean glob pattern {}: {}", path, glob_error);
                 }
             }
         }
