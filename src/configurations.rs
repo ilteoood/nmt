@@ -8,13 +8,13 @@ pub struct Configurations {
 }
 
 impl Configurations {
-    fn retrieve_current_working_directory() -> Result::<String, env::VarError> {
-        Ok(env::current_dir().unwrap().to_str().unwrap().to_string())
+    fn retrieve_current_working_directory() -> Option<String> {
+        Some(env::current_dir().unwrap().to_str().unwrap().to_string())
     }
 
-    pub fn new() -> Configurations {
-        let base_directory = env::var("BASE_DIRECTORY")
-            .or_else(|_| Configurations::retrieve_current_working_directory())
+    pub fn new(base_directory: Option<String>) -> Configurations {
+        let base_directory = base_directory
+            .or_else(|| Configurations::retrieve_current_working_directory())
             .unwrap();
 
         Configurations {
