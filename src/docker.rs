@@ -67,6 +67,9 @@ async fn main() {
 
     let build_image_options = BuildImageOptions {
         dockerfile: "Dockerfile",
+        nocache: true,
+        rm: true,
+        squash: true,
         pull: true,
         ..Default::default()
     };
