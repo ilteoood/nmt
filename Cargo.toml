@@ -6,3 +6,11 @@ edition = "2021"
 [dependencies]
 glob = "0.3.1"
 remove_empty_subdirs = "0.1.1"
+
+[[bin]]
+name = "cli"
+path = "src/cli.rs"
+
+[[bin]]
+name = "docker"
+path = "src/docker.rs"
