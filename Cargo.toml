@@ -1,0 +1,8 @@
+[package]
+name = "nmt"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+glob = "0.3.1"
+remove_empty_subdirs = "0.1.1"
