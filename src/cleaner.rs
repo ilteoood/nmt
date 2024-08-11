@@ -56,17 +56,22 @@ fn generate_default_paths(configurations: &Configurations) -> Vec<String> {
 fn delete_path(path: PathBuf) {
     let path_location = path.display();
     println!("Removing: {}", path_location);
-    let metadata = metadata(&path).unwrap();
+    let metadata = metadata(&path);
 
-    let remove_result = if metadata.is_dir() {
-        std::fs::remove_dir_all(&path)
-    } else {
-        std::fs::remove_file(&path)
-    };
+    match metadata {
+        Ok(metadata) => {
+            let remove_result = if metadata.is_dir() {
+                std::fs::remove_dir_all(&path)
+            } else {
+                std::fs::remove_file(&path)
+            };
 
-    match remove_result {
-        Ok(_) => println!("Removed: {}", path_location),
-        Err(_) => println!("Failed to remove: {}", path_location),
+            match remove_result {
+                Ok(_) => println!("Removed: {}", path_location),
+                Err(err) => println!("Failed to remove: {}, {}", path_location, err),
+            }
+        }
+        Err(err) => println!("Failed to remove: {}, {}", path_location, err),
     }
 }
 
