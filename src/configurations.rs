@@ -5,6 +5,7 @@ use std::{
 
 pub struct Configurations {
     pub node_modules_location: PathBuf,
+    pub dry_run: bool,
 }
 
 impl Configurations {
@@ -19,6 +20,7 @@ impl Configurations {
 
         Configurations {
             node_modules_location: Path::new(&base_directory).join("node_modules"),
+            dry_run: env::var("DRY_RUN").is_ok(),
         }
     }
 }
