@@ -69,25 +69,29 @@ fn delete_path(path: PathBuf) {
     }
 }
 
-fn clean_content(configurations: &Configurations) {
+pub fn retrieve_garbage(configurations: &Configurations) -> Vec<PathBuf> {
     let glob_options = MatchOptions {
         case_sensitive: false,
         require_literal_separator: false,
         require_literal_leading_dot: false,
     };
 
+    let mut garbage_paths: Vec<PathBuf> = vec![];
+
     for path in generate_default_paths(configurations) {
         for entry in glob_with(&path, glob_options)
-            .unwrap_or_else(|_| panic!("Failed to clean glob pattern: {}", path))
+            .unwrap_or_else(|_| panic!("Failed to process glob pattern: {}", path))
         {
             match entry {
-                Ok(path) => delete_path(path),
+                Ok(garbage_path) => garbage_paths.push(garbage_path),
                 Err(glob_error) => {
-                    println!("Failed to clean glob pattern {}: {}", path, glob_error);
+                    println!("Failed to process glob pattern {}: {}", path, glob_error);
                 }
             }
         }
     }
+
+    garbage_paths
 }
 
 fn remove_empty_dirs(configurations: &Configurations) {
@@ -97,7 +101,9 @@ fn remove_empty_dirs(configurations: &Configurations) {
     }
 }
 
-pub fn clean(configurations: &Configurations) {
-    clean_content(configurations);
+pub fn clean(configurations: &Configurations, garbage: Vec<PathBuf>) {
+    for path in garbage {
+        delete_path(path);
+    }
     remove_empty_dirs(configurations);
 }

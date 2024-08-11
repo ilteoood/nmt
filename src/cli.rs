@@ -8,5 +8,9 @@ mod configurations;
 fn main() {
     let base_directory = env::var("BASE_DIRECTORY");
 
-    cleaner::clean(&Configurations::new(base_directory.ok()));
+    let configurations = &Configurations::new(base_directory.ok());
+
+    let garbage_paths = cleaner::retrieve_garbage(configurations);
+
+    cleaner::clean(configurations, garbage_paths);
 }
