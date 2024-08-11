@@ -36,6 +36,7 @@ static DEFAULT_PATHS: &[&str] = &[
     ".prettierrc*",
     "*.bak",
     "karma.conf.*",
+    ".DS_Store",
 ];
 
 fn generate_default_paths(configurations: &Configurations) -> Vec<String> {
