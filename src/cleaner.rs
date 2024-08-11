@@ -39,40 +39,38 @@ static GARBAGE_ITEMS: &[&str] = &[
     ".DS_Store",
 ];
 
-static GARBAGE_ESM_ITEMS : &[&str] = &["esm", "*.esm.js", "*.mjs"];
+static GARBAGE_ESM_ITEMS: &[&str] = &["esm", "*.esm.js", "*.mjs"];
 
-fn manage_path<'a>(paths: &'a mut Vec<String>, configurations: &'a Configurations) -> impl FnMut(&str) + 'a {
-    move |path: &str| {
-        let join = configurations
-            .node_modules_location
-            .join("**")
-            .join(path);
+fn manage_path<'a>(
+    garbage_paths: &'a mut Vec<String>,
+    configurations: &'a Configurations,
+) -> impl FnMut(&[&str]) + 'a {
+    move |garbage_items: &[&str]| {
+        for garbage_item in garbage_items {
+            let garbage_path = configurations.node_modules_location.join("**").join(garbage_item);
 
-        match join.to_str() {
-            Some(join) => paths.push(join.to_string()),
-            None => println!("Failed to process: {}", path),
+            match garbage_path.to_str() {
+                Some(garbage_path) => garbage_paths.push(garbage_path.to_string()),
+                None => println!("Failed to process: {}", garbage_item),
+            }
         }
     }
 }
 
-fn generate_default_paths(configurations: &Configurations) -> Vec<String> {
-    let mut paths: Vec<String> = vec![];
+fn generate_garbage_paths(configurations: &Configurations) -> Vec<String> {
+    let mut garbage_paths: Vec<String> = vec![];
 
-    let mut manage_path_closure = manage_path(&mut paths, configurations);
+    let mut manage_path_closure = manage_path(&mut garbage_paths, configurations);
 
-    for garbage_item in GARBAGE_ITEMS {
-        manage_path_closure(garbage_item);
-    }
+    manage_path_closure(GARBAGE_ITEMS);
 
     if configurations.cjs_only {
-        for garbage_esm_item in GARBAGE_ESM_ITEMS {
-            manage_path_closure(garbage_esm_item);
-        }
+        manage_path_closure(GARBAGE_ESM_ITEMS);
     }
 
     drop(manage_path_closure);
 
-    paths
+    garbage_paths
 }
 
 fn delete_path(path: PathBuf) {
@@ -106,7 +104,7 @@ pub fn retrieve_garbage(configurations: &Configurations) -> Vec<PathBuf> {
 
     let mut garbage_paths: Vec<PathBuf> = vec![];
 
-    for path in generate_default_paths(configurations) {
+    for path in generate_garbage_paths(configurations) {
         for entry in glob_with(&path, glob_options)
             .unwrap_or_else(|_| panic!("Failed to process glob pattern: {}", path))
         {
