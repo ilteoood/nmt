@@ -29,6 +29,8 @@ static GARBAGE_ITEMS: &[&str] = &[
     ".DS_Store",
     ".markdownlint-cli2.yaml",
     ".editorconfig",
+    ".nvmrc",
+    "bower.json",
     // generic files
     ".*ignore",
     ".eslint*",
