@@ -6,7 +6,7 @@ mod cleaner;
 mod configurations;
 
 fn main() {
-    let base_directory = env::var("BASE_DIRECTORY");
+    let base_directory = env::var("BASE_DIR");
 
     let configurations = &Configurations::new(base_directory.ok());
 
