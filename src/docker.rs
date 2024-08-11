@@ -23,7 +23,7 @@ fn create_dockerfile_header(dockerfile: &str) -> tar::Header {
 fn create_tar(dockerfile: &str) -> tar::Builder<Vec<u8>> {
     let mut tar = tar::Builder::new(Vec::new());
     tar.append(
-        &create_dockerfile_header(&dockerfile),
+        &create_dockerfile_header(dockerfile),
         dockerfile.as_bytes(),
     )
     .unwrap();
@@ -32,13 +32,13 @@ fn create_tar(dockerfile: &str) -> tar::Builder<Vec<u8>> {
 }
 
 fn create_compressed_tar(dockerfile: &str) -> Vec<u8> {
-    let tar = create_tar(&dockerfile);
+    let tar = create_tar(dockerfile);
 
     let uncompressed = tar.into_inner().unwrap();
 
     let mut c = flate2::write::GzEncoder::new(Vec::new(), flate2::Compression::default());
     c.write_all(&uncompressed).unwrap();
-    c.finish().unwrap().into()
+    c.finish().unwrap()
 }
 
 fn create_dockerfile(source_image: &str) -> String {
@@ -53,11 +53,10 @@ RUN ./cli && rm -f ./cli"
 fn print_build_step(build_info: BuildInfo) {
     let content = build_info
         .status
-        .or_else(|| build_info.stream)
-        .or_else(|| Some(String::from("")))
-        .unwrap();
+        .or(build_info.stream)
+        .unwrap_or(String::from(""));
 
-    print!("{content}");
+    println!("{content}");
 }
 
 async fn run_build(
@@ -80,12 +79,16 @@ async fn run_build(
 async fn main() {
     let docker = Docker::connect_with_socket_defaults().unwrap();
 
-    let dockerfile = create_dockerfile("debian");
+    let source_image = "ilteoood/xdcc-mule";
+    let destination_image = format!("{source_image}:trimmed");
+
+    let dockerfile = create_dockerfile(source_image);
 
     let compressed_tar = create_compressed_tar(&dockerfile);
 
     let build_image_options = BuildImageOptions {
         dockerfile: "Dockerfile",
+        t: destination_image.as_str(),
         nocache: true,
         rm: true,
         pull: true,

@@ -39,20 +39,38 @@ static GARBAGE_ITEMS: &[&str] = &[
     ".DS_Store",
 ];
 
-fn generate_default_paths(configurations: &Configurations) -> Vec<String> {
-    let mut paths: Vec<String> = vec![];
+static GARBAGE_ESM_ITEMS : &[&str] = &["esm", "*.esm.js", "*.mjs"];
 
-    for garbage_item in GARBAGE_ITEMS {
+fn manage_path<'a>(paths: &'a mut Vec<String>, configurations: &'a Configurations) -> impl FnMut(&str) + 'a {
+    move |path: &str| {
         let join = configurations
             .node_modules_location
             .join("**")
-            .join(garbage_item);
+            .join(path);
 
         match join.to_str() {
             Some(join) => paths.push(join.to_string()),
-            None => println!("Failed to process: {}", garbage_item),
+            None => println!("Failed to process: {}", path),
         }
     }
+}
+
+fn generate_default_paths(configurations: &Configurations) -> Vec<String> {
+    let mut paths: Vec<String> = vec![];
+
+    let mut manage_path_closure = manage_path(&mut paths, configurations);
+
+    for garbage_item in GARBAGE_ITEMS {
+        manage_path_closure(garbage_item);
+    }
+
+    if configurations.cjs_only {
+        for garbage_esm_item in GARBAGE_ESM_ITEMS {
+            manage_path_closure(garbage_esm_item);
+        }
+    }
+
+    drop(manage_path_closure);
 
     paths
 }
