@@ -7,7 +7,6 @@ use remove_empty_subdirs::remove_empty_subdirs;
 static GARBAGE_ITEMS: &[&str] = &[
     // folders
     "@types",
-    ".github",
     "bench",
     "browser",
     "docs",
@@ -15,6 +14,7 @@ static GARBAGE_ITEMS: &[&str] = &[
     "examples",
     "test",
     "tests",
+    "benchmark",
     // extensions
     "*.md",
     "*.markdown",
@@ -25,6 +25,7 @@ static GARBAGE_ITEMS: &[&str] = &[
     "contributing",
     ".nycrc",
     "makefile",
+    ".DS_Store",
     // generic files
     ".*ignore",
     ".eslint*",
@@ -36,7 +37,8 @@ static GARBAGE_ITEMS: &[&str] = &[
     ".prettierrc*",
     "*.bak",
     "karma.conf.*",
-    ".DS_Store",
+    ".git*",
+    ".tap*"
 ];
 
 static GARBAGE_ESM_ITEMS: &[&str] = &["esm", "*.esm.js", "*.mjs"];
