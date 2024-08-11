@@ -4,7 +4,7 @@ use bollard::Docker;
 
 use futures_util::stream::StreamExt;
 
-use std::{fs::File, io::{Read, Write}};
+use std::io::Write;
 
 fn create_header(name: &str, size: usize) -> tar::Header {
     let mut header = tar::Header::new_gnu();
@@ -20,24 +20,13 @@ fn create_dockerfile_header(dockerfile: &str) -> tar::Header {
     create_header("Dockerfile", dockerfile.len())
 }
 
-fn create_cli_header(size: usize) -> tar::Header {
-    create_header("cli", size)
-}
-
-fn read_cli_file() -> Vec<u8> {
-    let mut f = File::open("./cli").unwrap();
-    let mut buffer = vec![];
-    f.read_to_end(&mut buffer).unwrap();
-
-    buffer
-}
-
 fn create_tar(dockerfile: &str) -> tar::Builder<Vec<u8>> {
-    let cli_file = read_cli_file();
-
     let mut tar = tar::Builder::new(Vec::new());
-    tar.append(&create_dockerfile_header(&dockerfile), dockerfile.as_bytes()).unwrap();
-    tar.append(&create_cli_header(cli_file.len()), &cli_file[..]).unwrap();
+    tar.append(
+        &create_dockerfile_header(&dockerfile),
+        dockerfile.as_bytes(),
+    )
+    .unwrap();
 
     tar
 }
@@ -54,9 +43,9 @@ fn create_compressed_tar(dockerfile: &str) -> Vec<u8> {
 
 fn create_dockerfile(source_image: &str) -> String {
     format!(
-        "FROM {source_image}
-COPY ./cli .
-RUN ls -lah
+        "FROM ilteoood/nmt as trimmer
+FROM {source_image}
+COPY --from=trimmer ./cli .
 RUN ./cli && rm -f ./cli"
     )
 }
