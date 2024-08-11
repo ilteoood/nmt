@@ -15,6 +15,7 @@ static GARBAGE_ITEMS: &[&str] = &[
     "test",
     "tests",
     "benchmark",
+    "integration",
     // extensions
     "*.md",
     "*.markdown",
@@ -26,6 +27,8 @@ static GARBAGE_ITEMS: &[&str] = &[
     ".nycrc",
     "makefile",
     ".DS_Store",
+    ".markdownlint-cli2.yaml",
+    ".editorconfig",
     // generic files
     ".*ignore",
     ".eslint*",
@@ -38,7 +41,8 @@ static GARBAGE_ITEMS: &[&str] = &[
     "*.bak",
     "karma.conf.*",
     ".git*",
-    ".tap*"
+    ".tap*",
+    ".c8*"
 ];
 
 static GARBAGE_ESM_ITEMS: &[&str] = &["esm", "*.esm.js", "*.mjs"];
