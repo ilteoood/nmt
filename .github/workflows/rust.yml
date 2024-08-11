@@ -19,3 +19,13 @@ jobs:
 
       - name: Build
         run: cargo build
+
+      - name: Build and publish image
+        uses: ilteoood/docker_buildx@master
+        with:
+          tag: latest
+          platform: linux/amd64,linux/arm64
+          imageName: ilteoood/nmt
+          publish: true
+          dockerUser: ilteoood
+          dockerPassword: ${{ secrets.DOCKER_HUB_PASSWORD }}
