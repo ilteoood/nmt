@@ -4,7 +4,7 @@ use crate::configurations::Configurations;
 use glob::{glob_with, MatchOptions};
 use remove_empty_subdirs::remove_empty_subdirs;
 
-static DEFAULT_PATHS: &[&str] = &[
+static GARBAGE_ITEMS: &[&str] = &[
     // folders
     "@types",
     ".github",
@@ -42,12 +42,16 @@ static DEFAULT_PATHS: &[&str] = &[
 fn generate_default_paths(configurations: &Configurations) -> Vec<String> {
     let mut paths: Vec<String> = vec![];
 
-    for default_path in DEFAULT_PATHS {
+    for garbage_item in GARBAGE_ITEMS {
         let join = configurations
             .node_modules_location
             .join("**")
-            .join(default_path);
-        paths.push(join.to_str().unwrap().to_string());
+            .join(garbage_item);
+
+        match join.to_str() {
+            Some(join) => paths.push(join.to_string()),
+            None => println!("Failed to process: {}", garbage_item),
+        }
     }
 
     paths
