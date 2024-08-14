@@ -3,23 +3,23 @@ use std::{
     path::{Path, PathBuf},
 };
 
-pub struct Configurations {
+pub struct CliConfigurations {
     pub node_modules_location: PathBuf,
     pub dry_run: bool,
     pub cjs_only: bool,
 }
 
-impl Configurations {
+impl CliConfigurations {
     fn retrieve_current_working_directory() -> Option<String> {
         Some(env::current_dir().unwrap().to_str().unwrap().to_string())
     }
 
-    pub fn new(base_directory: Option<String>) -> Configurations {
+    pub fn new(base_directory: Option<String>) -> CliConfigurations {
         let base_directory = base_directory
-            .or_else(Configurations::retrieve_current_working_directory)
+            .or_else(CliConfigurations::retrieve_current_working_directory)
             .unwrap();
 
-        Configurations {
+        CliConfigurations {
             node_modules_location: Path::new(&base_directory).join("node_modules"),
             dry_run: env::var("DRY_RUN").is_ok(),
             cjs_only: env::var("CJS_ONLY").is_ok(),

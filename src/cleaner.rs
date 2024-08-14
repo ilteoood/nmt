@@ -1,6 +1,6 @@
 use std::{fs::metadata, path::PathBuf};
 
-use crate::configurations::Configurations;
+use crate::configurations::CliConfigurations;
 use glob::{glob_with, MatchOptions};
 use remove_empty_subdirs::remove_empty_subdirs;
 
@@ -51,7 +51,7 @@ static GARBAGE_ESM_ITEMS: &[&str] = &["esm", "*.esm.js", "*.mjs"];
 
 fn manage_path<'a>(
     garbage_paths: &'a mut Vec<String>,
-    configurations: &'a Configurations,
+    configurations: &'a CliConfigurations,
 ) -> impl FnMut(&[&str]) + 'a {
     move |garbage_items: &[&str]| {
         for garbage_item in garbage_items {
@@ -65,7 +65,7 @@ fn manage_path<'a>(
     }
 }
 
-fn generate_garbage_paths(configurations: &Configurations) -> Vec<String> {
+fn generate_garbage_paths(configurations: &CliConfigurations) -> Vec<String> {
     let mut garbage_paths: Vec<String> = vec![];
 
     let mut manage_path_closure = manage_path(&mut garbage_paths, configurations);
@@ -103,7 +103,7 @@ fn delete_path(path: PathBuf) {
     }
 }
 
-pub fn retrieve_garbage(configurations: &Configurations) -> Vec<PathBuf> {
+pub fn retrieve_garbage(configurations: &CliConfigurations) -> Vec<PathBuf> {
     let glob_options = MatchOptions {
         case_sensitive: false,
         require_literal_separator: false,
@@ -128,14 +128,14 @@ pub fn retrieve_garbage(configurations: &Configurations) -> Vec<PathBuf> {
     garbage_paths
 }
 
-fn remove_empty_dirs(configurations: &Configurations) {
+fn remove_empty_dirs(configurations: &CliConfigurations) {
     match remove_empty_subdirs(&configurations.node_modules_location) {
         Ok(_) => println!("Removed empty directories"),
         Err(_) => println!("Failed to remove empty directories"),
     }
 }
 
-pub fn clean(configurations: &Configurations, garbage: Vec<PathBuf>) {
+pub fn clean(configurations: &CliConfigurations, garbage: Vec<PathBuf>) {
     for path in garbage {
         delete_path(path);
     }
