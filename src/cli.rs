@@ -12,6 +12,8 @@ fn main() {
         cleaner::clean(configurations, garbage_paths);
     } else {
         println!("Dry run. These are the paths that should be removed:");
-        garbage_paths.iter().for_each(|path| println!("{}", path.display()));
+        garbage_paths
+            .iter()
+            .for_each(|path| println!("{}", path.display()));
     }
 }

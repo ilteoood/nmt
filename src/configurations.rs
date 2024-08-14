@@ -38,11 +38,7 @@ impl CliConfigurations {
     }
 
     pub fn to_dockerfile_env(&self) -> String {
-        let mut env = format!(
-            "ENV {}={}",
-            BASE_DIR,
-            self.node_modules_location.display()
-        );
+        let mut env = format!("ENV {}={}", BASE_DIR, self.node_modules_location.display());
         if self.dry_run {
             env += format!("ENV {}={}", DRY_RUN, self.dry_run).as_str();
         }

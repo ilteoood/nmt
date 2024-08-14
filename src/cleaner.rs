@@ -44,7 +44,7 @@ static GARBAGE_ITEMS: &[&str] = &[
     "karma.conf.*",
     ".git*",
     ".tap*",
-    ".c8*"
+    ".c8*",
 ];
 
 static GARBAGE_ESM_ITEMS: &[&str] = &["esm", "*.esm.js", "*.mjs"];
@@ -55,7 +55,10 @@ fn manage_path<'a>(
 ) -> impl FnMut(&[&str]) + 'a {
     move |garbage_items: &[&str]| {
         for garbage_item in garbage_items {
-            let garbage_path = configurations.node_modules_location.join("**").join(garbage_item);
+            let garbage_path = configurations
+                .node_modules_location
+                .join("**")
+                .join(garbage_item);
 
             match garbage_path.to_str() {
                 Some(garbage_path) => garbage_paths.push(garbage_path.to_string()),
