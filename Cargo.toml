@@ -12,6 +12,9 @@ remove_empty_subdirs = "0.1.1"
 tar = "0.4.41"
 tokio = { version = "1.39.2", features = ["full"] }
 
+[dev-dependencies]
+serial_test = "*"
+
 [[bin]]
 name = "cli"
 path = "src/cli.rs"

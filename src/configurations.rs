@@ -40,11 +40,21 @@ impl CliConfigurations {
     pub fn to_dockerfile_env(&self) -> String {
         let mut env = format!("ENV {}={}", BASE_DIR, self.node_modules_location.display());
         if self.dry_run {
-            env += format!("ENV {}={}", DRY_RUN, self.dry_run).as_str();
+            env += format!(
+                "
+ENV {}={}",
+                DRY_RUN, self.dry_run
+            )
+            .as_str();
         }
 
         if self.cjs_only {
-            env += format!("ENV {}={}", CJS_ONLY, self.cjs_only).as_str();
+            env += format!(
+                "
+ENV {}={}",
+                CJS_ONLY, self.cjs_only
+            )
+            .as_str();
         }
 
         env
@@ -67,5 +77,91 @@ impl DockerConfigurations {
             source_image,
             destination_image,
         }
+    }
+}
+
+#[cfg(test)]
+#[serial_test::serial]
+mod tests {
+    use super::*;
+    use std::env;
+
+    fn clean_cli_env() {
+        env::remove_var(BASE_DIR);
+        env::remove_var(DRY_RUN);
+        env::remove_var(CJS_ONLY);
+    }
+
+    #[test]
+    fn test_cli_default_configurations() {
+        clean_cli_env();
+
+        let configurations = CliConfigurations::from_env();
+        assert_eq!(
+            configurations.node_modules_location,
+            PathBuf::from(CliConfigurations::retrieve_current_working_directory().unwrap())
+                .join("node_modules")
+        );
+        assert!(!configurations.dry_run);
+        assert!(!configurations.cjs_only);
+    }
+
+    #[test]
+    fn test_cli_configurations() {
+        env::set_var(BASE_DIR, "BASE_DIR");
+        env::set_var(DRY_RUN, "true");
+        env::set_var(CJS_ONLY, "true");
+        let configurations = CliConfigurations::from_env();
+        assert_eq!(
+            configurations.node_modules_location,
+            PathBuf::from("BASE_DIR").join("node_modules")
+        );
+        assert!(configurations.dry_run);
+        assert!(configurations.cjs_only);
+    }
+
+    #[test]
+    fn test_cli_default_to_docker_env() {
+        clean_cli_env();
+
+        let configurations = CliConfigurations::from_env();
+
+        assert_eq!(
+            configurations.to_dockerfile_env(),
+            format!(
+                "ENV BASE_DIR={}/node_modules",
+                CliConfigurations::retrieve_current_working_directory().unwrap()
+            )
+        );
+    }
+
+    #[test]
+    fn test_cli_to_docker_env() {
+        env::set_var(BASE_DIR, "BASE_DIR");
+        env::set_var(DRY_RUN, "true");
+        env::set_var(CJS_ONLY, "true");
+        let configurations = CliConfigurations::from_env();
+
+        assert_eq!(
+            configurations.to_dockerfile_env(),
+            "ENV BASE_DIR=BASE_DIR/node_modules\nENV DRY_RUN=true\nENV CJS_ONLY=true"
+        );
+    }
+
+    #[test]
+    fn test_docker_default_configurations() {
+        env::remove_var("SOURCE_IMAGE");
+        env::remove_var("DESTINATION_IMAGE");
+        env::remove_var(BASE_DIR);
+        env::remove_var(DRY_RUN);
+        env::remove_var(CJS_ONLY);
+        let configurations = DockerConfigurations::from_env();
+        assert_eq!(
+            configurations.cli.node_modules_location,
+            PathBuf::from(CliConfigurations::retrieve_current_working_directory().unwrap())
+                .join("node_modules")
+        );
+        assert_eq!(configurations.source_image, "hello-world");
+        assert_eq!(configurations.destination_image, "hello-world:trimmed");
     }
 }
