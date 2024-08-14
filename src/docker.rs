@@ -2,9 +2,14 @@ use bollard::image::BuildImageOptions;
 use bollard::secret::BuildInfo;
 use bollard::Docker;
 
+use configurations::DockerConfigurations;
 use futures_util::stream::StreamExt;
 
 use std::io::Write;
+
+mod configurations;
+
+const DOCKERFILE_NAME: &str = "Dockerfile";
 
 fn create_header(name: &str, size: usize) -> tar::Header {
     let mut header = tar::Header::new_gnu();
@@ -17,7 +22,7 @@ fn create_header(name: &str, size: usize) -> tar::Header {
 }
 
 fn create_dockerfile_header(dockerfile: &str) -> tar::Header {
-    create_header("Dockerfile", dockerfile.len())
+    create_header(DOCKERFILE_NAME, dockerfile.len())
 }
 
 fn create_tar(dockerfile: &str) -> tar::Builder<Vec<u8>> {
@@ -38,16 +43,24 @@ fn create_compressed_tar(dockerfile: &str) -> Vec<u8> {
     c.finish().unwrap()
 }
 
-fn create_dockerfile(source_image: &str, history: History) -> String {
-    format!(r##"FROM ilteoood/nmt as nmt_trimmer
-    FROM {source_image} as source_image
+fn create_dockerfile(configurations: &DockerConfigurations, history: History) -> String {
+    format!(
+        r##"FROM ilteoood/nmt as nmt_trimmer
+    FROM {} as source_image
     COPY --from=nmt_trimmer ./cli .
+    {}
     RUN ./cli && rm -f ./cli
     FROM scratch
     COPY --from=source_image / /
     {}
     {}
-    {}"##, history.workdir, history.command, history.entry_point)
+    {}"##,
+        configurations.source_image,
+        configurations.cli.to_dockerfile_env(),
+        history.workdir,
+        history.command,
+        history.entry_point
+    )
 }
 
 fn print_build_step(build_info: BuildInfo) {
@@ -83,9 +96,11 @@ struct History {
 
 async fn retrieve_history(
     docker: &Docker,
-    source_image: &str,
+    configurations: &DockerConfigurations,
 ) -> Result<History, bollard::errors::Error> {
-    let history = docker.image_history(source_image).await?;
+    let history = docker
+        .image_history(configurations.source_image.as_str())
+        .await?;
 
     let mut entry_point: String = String::new();
     let mut command = String::new();
@@ -111,21 +126,19 @@ async fn retrieve_history(
 
 #[tokio::main]
 async fn main() -> Result<(), bollard::errors::Error> {
+    let configurations = DockerConfigurations::from_env();
+
     let docker = Docker::connect_with_socket_defaults().unwrap();
 
-    let source_image = "ilteoood/xdcc-mule";
+    let history = retrieve_history(&docker, &configurations).await?;
 
-    let history = retrieve_history(&docker, source_image).await?;
-
-    let destination_image = format!("{source_image}:trimmed");
-
-    let dockerfile = create_dockerfile(source_image, history);
+    let dockerfile = create_dockerfile(&configurations, history);
 
     let compressed_tar = create_compressed_tar(&dockerfile);
 
     let build_image_options = BuildImageOptions {
-        dockerfile: "Dockerfile",
-        t: destination_image.as_str(),
+        dockerfile: DOCKERFILE_NAME,
+        t: &configurations.destination_image,
         nocache: true,
         rm: true,
         pull: true,

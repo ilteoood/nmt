@@ -1,14 +1,10 @@
-use std::env;
-
 use configurations::CliConfigurations;
 
 mod cleaner;
 mod configurations;
 
 fn main() {
-    let base_directory = env::var("BASE_DIR");
-
-    let configurations = &CliConfigurations::new(base_directory.ok());
+    let configurations = &CliConfigurations::from_env();
 
     let garbage_paths = cleaner::retrieve_garbage(configurations);
 
