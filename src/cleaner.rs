@@ -160,6 +160,18 @@ mod tests {
 
     use super::*;
 
+    fn base_garbage_structure() -> Vec<String> {
+        vec![
+            "/tests/node_modules/@types".to_owned(),
+            "/tests/node_modules/fastify/README.md".to_owned(),
+            "/tests/node_modules/fastify/eslint.config.ts".to_owned(),
+            "/tests/node_modules/busboy/.nvmrc".to_owned(),
+            "/tests/node_modules/busboy/.eslintrc.json".to_owned(),
+            "/tests/node_modules/ilteoood/unlegit.min.js".to_owned(),
+            "/tests/node_modules/@types/tsconfig.json".to_owned(),
+        ]
+    }
+
     #[test]
     fn test_retrieve_garbage() {
         let configurations = CliConfigurations::from_env();
@@ -184,18 +196,7 @@ mod tests {
             .map(|path| path.display().to_string().replace(current_dir, ""))
             .collect();
 
-        assert_eq!(
-            garbage,
-            vec![
-                "/tests/node_modules/@types",
-                "/tests/node_modules/fastify/README.md",
-                "/tests/node_modules/fastify/eslint.config.ts",
-                "/tests/node_modules/busboy/.nvmrc",
-                "/tests/node_modules/busboy/.eslintrc.json",
-                "/tests/node_modules/ilteoood/unlegit.min.js",
-                "/tests/node_modules/@types/tsconfig.json"
-            ]
-        );
+        assert_eq!(garbage, base_garbage_structure());
     }
 
     #[test]
@@ -215,18 +216,9 @@ mod tests {
             .map(|path| path.display().to_string().replace(current_dir, ""))
             .collect();
 
-        assert_eq!(
-            garbage,
-            vec![
-                "/tests/node_modules/@types",
-                "/tests/node_modules/fastify/README.md",
-                "/tests/node_modules/fastify/eslint.config.ts",
-                "/tests/node_modules/busboy/.nvmrc",
-                "/tests/node_modules/busboy/.eslintrc.json",
-                "/tests/node_modules/ilteoood/unlegit.min.js",
-                "/tests/node_modules/@types/tsconfig.json",
-                "/tests/node_modules/ilteoood/legit.esm.js"
-            ]
-        );
+        let mut expected_garbage = base_garbage_structure();
+        expected_garbage.push("/tests/node_modules/ilteoood/legit.esm.js".to_owned());
+
+        assert_eq!(garbage, expected_garbage);
     }
 }
