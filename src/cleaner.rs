@@ -1,4 +1,4 @@
-use std::{fs::metadata, path::PathBuf};
+use std::{collections::HashSet, fs::metadata, path::PathBuf};
 
 use glob::{glob_with, MatchOptions};
 use nmt::configurations::CliConfigurations;
@@ -20,7 +20,7 @@ static GARBAGE_ITEMS: &[&str] = &[
     "*.md",
     "*.markdown",
     "*.map",
-    "*.*ts",
+    "*.ts",
     // specific files
     "license",
     "contributing",
@@ -33,7 +33,7 @@ static GARBAGE_ITEMS: &[&str] = &[
     "bower.json",
     // generic files
     ".*ignore",
-    ".eslint*",
+    "*eslint*",
     "*.min.*",
     "browser.*js",
     ".travis.*",
@@ -106,6 +106,15 @@ fn delete_path(path: PathBuf) {
     }
 }
 
+fn filter_duplicated_paths(paths: Vec<PathBuf>) -> Vec<PathBuf> {
+    let mut unique_paths = HashSet::<String>::new();
+
+    paths
+        .into_iter()
+        .filter(|path| unique_paths.insert(path.display().to_string()))
+        .collect()
+}
+
 pub fn retrieve_garbage(configurations: &CliConfigurations) -> Vec<PathBuf> {
     let glob_options = MatchOptions {
         case_sensitive: false,
@@ -128,7 +137,7 @@ pub fn retrieve_garbage(configurations: &CliConfigurations) -> Vec<PathBuf> {
         }
     }
 
-    garbage_paths
+    filter_duplicated_paths(garbage_paths)
 }
 
 fn remove_empty_dirs(configurations: &CliConfigurations) {
@@ -147,6 +156,8 @@ pub fn clean(configurations: &CliConfigurations, garbage: Vec<PathBuf>) {
 
 #[cfg(test)]
 mod tests {
+    use std::env;
+
     use super::*;
 
     #[test]
@@ -154,5 +165,36 @@ mod tests {
         let configurations = CliConfigurations::from_env();
         let garbage = retrieve_garbage(&configurations);
         assert!(garbage.is_empty());
+    }
+
+    #[test]
+    fn test_retrieve_all_garbage() {
+        let current_dir = env::current_dir().unwrap();
+        let garbage = retrieve_garbage(&CliConfigurations {
+            node_modules_location: current_dir.join("tests").join("node_modules"),
+            cjs_only: false,
+            dry_run: true,
+        });
+
+        let current_dir = current_dir.display().to_string();
+        let current_dir = current_dir.as_str();
+
+        let garbage: Vec<String> = garbage
+            .iter()
+            .map(|path| path.display().to_string().replace(current_dir, ""))
+            .collect();
+
+        assert_eq!(
+            garbage,
+            vec![
+                "/tests/node_modules/@types",
+                "/tests/node_modules/fastify/README.md",
+                "/tests/node_modules/fastify/eslint.config.ts",
+                "/tests/node_modules/busboy/.nvmrc",
+                "/tests/node_modules/busboy/.eslintrc.json",
+                "/tests/node_modules/ilteoood/unlegit.min.js",
+                "/tests/node_modules/@types/tsconfig.json"
+            ]
+        );
     }
 }
