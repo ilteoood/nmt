@@ -179,16 +179,25 @@ mod tests {
         assert!(garbage.is_empty());
     }
 
+    fn retrieve_tests_folders() -> (PathBuf, String) {
+        let current_dir = env::current_dir().unwrap();
+
+        (
+            current_dir.join("tests").join("node_modules"),
+            current_dir.display().to_string(),
+        )
+    }
+
     #[test]
     fn test_retrieve_all_garbage() {
-        let current_dir = env::current_dir().unwrap();
+        let (node_modules_location, current_dir) = retrieve_tests_folders();
+
         let garbage = retrieve_garbage(&CliConfigurations {
-            node_modules_location: current_dir.join("tests").join("node_modules"),
+            node_modules_location,
             cjs_only: false,
             dry_run: true,
         });
 
-        let current_dir = current_dir.display().to_string();
         let current_dir = current_dir.as_str();
 
         let garbage: Vec<String> = garbage
@@ -201,14 +210,14 @@ mod tests {
 
     #[test]
     fn test_retrieve_all_with_esm_garbage() {
-        let current_dir = env::current_dir().unwrap();
+        let (node_modules_location, current_dir) = retrieve_tests_folders();
+
         let garbage = retrieve_garbage(&CliConfigurations {
-            node_modules_location: current_dir.join("tests").join("node_modules"),
+            node_modules_location,
             cjs_only: true,
             dry_run: true,
         });
 
-        let current_dir = current_dir.display().to_string();
         let current_dir = current_dir.as_str();
 
         let garbage: Vec<String> = garbage
@@ -220,5 +229,45 @@ mod tests {
         expected_garbage.push("/tests/node_modules/ilteoood/legit.esm.js".to_owned());
 
         assert_eq!(garbage, expected_garbage);
+    }
+
+    #[test]
+    fn test_remove_empty_dirs() {
+        let configurations = CliConfigurations::from_env();
+        remove_empty_dirs(&configurations);
+    }
+
+    #[test]
+    fn test_clean() {
+        let (node_modules_location, _) = retrieve_tests_folders();
+        let configurations = &CliConfigurations {
+            node_modules_location: node_modules_location.clone(),
+            cjs_only: false,
+            dry_run: true,
+        };
+
+        let garbage = retrieve_garbage(configurations);
+
+        clean(configurations, garbage);
+
+        assert_eq!(node_modules_location.join("@types").exists(), false);
+        assert_eq!(node_modules_location.join("busboy").exists(), false);
+        assert_eq!(node_modules_location.join("fastify").exists(), false);
+        assert!(node_modules_location.join("ilteoood").exists());
+        assert!(node_modules_location
+            .join("ilteoood")
+            .join("legit.esm.js")
+            .exists());
+        assert!(node_modules_location
+            .join("ilteoood")
+            .join("legit.js")
+            .exists());
+        assert_eq!(
+            node_modules_location
+                .join("ilteoood")
+                .join("unlegit.min.js")
+                .exists(),
+            false
+        );
     }
 }
