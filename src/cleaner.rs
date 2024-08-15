@@ -1,7 +1,7 @@
 use std::{fs::metadata, path::PathBuf};
 
-use crate::configurations::CliConfigurations;
 use glob::{glob_with, MatchOptions};
+use nmt::configurations::CliConfigurations;
 use remove_empty_subdirs::remove_empty_subdirs;
 
 static GARBAGE_ITEMS: &[&str] = &[
@@ -143,4 +143,16 @@ pub fn clean(configurations: &CliConfigurations, garbage: Vec<PathBuf>) {
         delete_path(path);
     }
     remove_empty_dirs(configurations);
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_retrieve_garbage() {
+        let configurations = CliConfigurations::from_env();
+        let garbage = retrieve_garbage(&configurations);
+        assert!(garbage.is_empty());
+    }
 }

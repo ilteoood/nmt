@@ -18,6 +18,9 @@ pub struct DockerConfigurations {
 const BASE_DIR: &str = "BASE_DIR";
 const DRY_RUN: &str = "DRY_RUN";
 const CJS_ONLY: &str = "CJS_ONLY";
+const SOURCE_IMAGE: &str = "SOURCE_IMAGE";
+const DESTINATION_IMAGE: &str = "DESTINATION_IMAGE";
+const DEFAULT_IMAGE_NAME: &str = "hello-world";
 
 impl CliConfigurations {
     fn retrieve_current_working_directory() -> Option<String> {
@@ -63,8 +66,8 @@ ENV {}={}",
 
 impl DockerConfigurations {
     pub fn from_env() -> DockerConfigurations {
-        let source_image = env::var("SOURCE_IMAGE").unwrap_or(String::from("hello-world"));
-        let destination_image = env::var("DESTINATION_IMAGE").unwrap_or_else(|_| {
+        let source_image = env::var(SOURCE_IMAGE).unwrap_or(String::from(DEFAULT_IMAGE_NAME));
+        let destination_image = env::var(DESTINATION_IMAGE).unwrap_or_else(|_| {
             source_image.split(":").collect::<Vec<&str>>()[0]
                 .split("@")
                 .collect::<Vec<&str>>()[0]
@@ -150,8 +153,8 @@ mod tests {
 
     #[test]
     fn test_docker_default_configurations() {
-        env::remove_var("SOURCE_IMAGE");
-        env::remove_var("DESTINATION_IMAGE");
+        env::remove_var(SOURCE_IMAGE);
+        env::remove_var(DESTINATION_IMAGE);
         env::remove_var(BASE_DIR);
         env::remove_var(DRY_RUN);
         env::remove_var(CJS_ONLY);
@@ -161,7 +164,10 @@ mod tests {
             PathBuf::from(CliConfigurations::retrieve_current_working_directory().unwrap())
                 .join("node_modules")
         );
-        assert_eq!(configurations.source_image, "hello-world");
-        assert_eq!(configurations.destination_image, "hello-world:trimmed");
+        assert_eq!(configurations.source_image, DEFAULT_IMAGE_NAME);
+        assert_eq!(
+            configurations.destination_image,
+            format!("{DEFAULT_IMAGE_NAME}:trimmed")
+        );
     }
 }

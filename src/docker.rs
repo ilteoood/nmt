@@ -2,12 +2,10 @@ use bollard::image::BuildImageOptions;
 use bollard::secret::BuildInfo;
 use bollard::Docker;
 
-use configurations::DockerConfigurations;
 use futures_util::stream::StreamExt;
+use nmt::configurations::DockerConfigurations;
 
 use std::io::Write;
-
-mod configurations;
 
 const DOCKERFILE_NAME: &str = "Dockerfile";
 

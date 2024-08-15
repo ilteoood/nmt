@@ -1,7 +1,6 @@
-use configurations::CliConfigurations;
+use nmt::configurations::CliConfigurations;
 
 mod cleaner;
-mod configurations;
 
 fn main() {
     let configurations = &CliConfigurations::from_env();
