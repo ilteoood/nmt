@@ -197,4 +197,36 @@ mod tests {
             ]
         );
     }
+
+    #[test]
+    fn test_retrieve_all_with_esm_garbage() {
+        let current_dir = env::current_dir().unwrap();
+        let garbage = retrieve_garbage(&CliConfigurations {
+            node_modules_location: current_dir.join("tests").join("node_modules"),
+            cjs_only: true,
+            dry_run: true,
+        });
+
+        let current_dir = current_dir.display().to_string();
+        let current_dir = current_dir.as_str();
+
+        let garbage: Vec<String> = garbage
+            .iter()
+            .map(|path| path.display().to_string().replace(current_dir, ""))
+            .collect();
+
+        assert_eq!(
+            garbage,
+            vec![
+                "/tests/node_modules/@types",
+                "/tests/node_modules/fastify/README.md",
+                "/tests/node_modules/fastify/eslint.config.ts",
+                "/tests/node_modules/busboy/.nvmrc",
+                "/tests/node_modules/busboy/.eslintrc.json",
+                "/tests/node_modules/ilteoood/unlegit.min.js",
+                "/tests/node_modules/@types/tsconfig.json",
+                "/tests/node_modules/ilteoood/legit.esm.js"
+            ]
+        );
+    }
 }
