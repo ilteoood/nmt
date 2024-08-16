@@ -19,14 +19,13 @@ fn create_header(name: &str, size: usize) -> tar::Header {
     header
 }
 
-fn create_dockerfile_header(dockerfile: &str) -> tar::Header {
-    create_header(DOCKERFILE_NAME, dockerfile.len())
-}
-
 fn create_tar(dockerfile: &str) -> tar::Builder<Vec<u8>> {
     let mut tar = tar::Builder::new(Vec::new());
-    tar.append(&create_dockerfile_header(dockerfile), dockerfile.as_bytes())
-        .unwrap();
+    tar.append(
+        &create_header(DOCKERFILE_NAME, dockerfile.len()),
+        dockerfile.as_bytes(),
+    )
+    .unwrap();
 
     tar
 }
@@ -52,10 +51,12 @@ fn create_dockerfile(configurations: &DockerConfigurations, history: History) ->
     COPY --from=source_image / /
     {}
     {}
+    {}
     {}"##,
         configurations.source_image,
         configurations.cli.to_dockerfile_env(),
         history.workdir,
+        history.health_check,
         history.command,
         history.entry_point
     )
@@ -91,19 +92,41 @@ struct History {
     workdir: String,
     command: String,
     entry_point: String,
+    health_check: String,
+}
+
+async fn pull_image(docker: &Docker, image_name: &str) {
+    let dockerfile = format!("FROM {}", image_name);
+
+    let compressed_tar = create_compressed_tar(dockerfile.as_str());
+
+    run_build(
+        BuildImageOptions {
+            dockerfile: DOCKERFILE_NAME,
+            nocache: true,
+            rm: true,
+            pull: true,
+            ..Default::default()
+        },
+        docker,
+        compressed_tar,
+    )
+    .await;
 }
 
 async fn retrieve_history(
     docker: &Docker,
     configurations: &DockerConfigurations,
 ) -> Result<History, bollard::errors::Error> {
-    let history = docker
-        .image_history(configurations.source_image.as_str())
-        .await?;
+    let source_image = configurations.source_image.as_str();
+    pull_image(docker, source_image).await;
+
+    let history = docker.image_history(source_image).await?;
 
     let mut entry_point: String = String::new();
     let mut command = String::new();
     let mut workdir = String::new();
+    let mut health_check = String::new();
 
     for history_item in history {
         match history_item.created_by.to_lowercase() {
@@ -112,6 +135,7 @@ async fn retrieve_history(
             }
             cmd if command.is_empty() && cmd.starts_with("command") => command = cmd,
             wd if workdir.is_empty() && wd.starts_with("workdir") => workdir = wd,
+            hc if health_check.is_empty() && hc.starts_with("healthcheck") => health_check = hc,
             _ => {}
         }
     }
@@ -120,6 +144,7 @@ async fn retrieve_history(
         workdir,
         command,
         entry_point,
+        health_check,
     })
 }
 
@@ -150,11 +175,13 @@ async fn main() -> Result<(), bollard::errors::Error> {
 }
 
 #[cfg(test)]
-mod tests {
+mod history_tests {
+    use nmt::configurations::CliConfigurations;
+
     use super::*;
 
     #[tokio::test]
-    async fn test_create_dockerfile() {
+    async fn test_empty_history() {
         let history = retrieve_history(
             &Docker::connect_with_socket_defaults().unwrap(),
             &DockerConfigurations::from_env(),
@@ -167,7 +194,32 @@ mod tests {
             History {
                 workdir: String::new(),
                 command: String::new(),
-                entry_point: String::new()
+                entry_point: String::new(),
+                health_check: String::new()
+            }
+        );
+    }
+
+    #[tokio::test]
+    async fn test_history() {
+        let history = retrieve_history(
+            &Docker::connect_with_socket_defaults().unwrap(),
+            &DockerConfigurations {
+                source_image: String::from("ilteoood/xdcc-mule"),
+                destination_image: String::from("ilteoood/xdcc-mule"),
+                cli: CliConfigurations::from_env(),
+            },
+        )
+        .await
+        .unwrap();
+
+        assert_eq!(
+            history,
+            History {
+                workdir: String::from("workdir /app"),
+                command: String::new(),
+                entry_point: String::from("entrypoint \"node\" \"index.js\""),
+                health_check: String::new()
             }
         );
     }
