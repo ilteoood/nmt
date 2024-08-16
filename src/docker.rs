@@ -4,6 +4,7 @@ use bollard::Docker;
 
 use futures_util::stream::StreamExt;
 use nmt::configurations::DockerConfigurations;
+use nmt::container_configurations::ContainerConfigurations;
 
 use std::io::Write;
 
@@ -40,7 +41,10 @@ fn create_compressed_tar(dockerfile: &str) -> Vec<u8> {
     c.finish().unwrap()
 }
 
-fn create_dockerfile(configurations: &DockerConfigurations, history: History) -> String {
+fn create_dockerfile(
+    configurations: &DockerConfigurations,
+    container_configurations: ContainerConfigurations,
+) -> String {
     format!(
         r##"FROM ilteoood/nmt as nmt_trimmer
     FROM {} as source_image
@@ -49,16 +53,10 @@ fn create_dockerfile(configurations: &DockerConfigurations, history: History) ->
     RUN ./cli && rm -f ./cli
     FROM scratch
     COPY --from=source_image / /
-    {}
-    {}
-    {}
     {}"##,
         configurations.source_image,
         configurations.cli.to_dockerfile_env(),
-        history.workdir,
-        history.health_check,
-        history.command,
-        history.entry_point
+        container_configurations.to_dockerfile(),
     )
 }
 
@@ -87,14 +85,6 @@ async fn run_build(
     }
 }
 
-#[derive(Debug, PartialEq)]
-struct History {
-    workdir: String,
-    command: String,
-    entry_point: String,
-    health_check: String,
-}
-
 async fn pull_image(docker: &Docker, image_name: &str) {
     let dockerfile = format!("FROM {}", image_name);
 
@@ -114,38 +104,19 @@ async fn pull_image(docker: &Docker, image_name: &str) {
     .await;
 }
 
-async fn retrieve_history(
+async fn retrieve_config(
     docker: &Docker,
     configurations: &DockerConfigurations,
-) -> Result<History, bollard::errors::Error> {
+) -> Result<ContainerConfigurations, bollard::errors::Error> {
     let source_image = configurations.source_image.as_str();
     pull_image(docker, source_image).await;
 
-    let history = docker.image_history(source_image).await?;
+    let inspect = docker.inspect_image(source_image).await?;
 
-    let mut entry_point: String = String::new();
-    let mut command = String::new();
-    let mut workdir = String::new();
-    let mut health_check = String::new();
-
-    for history_item in history {
-        match history_item.created_by.to_lowercase() {
-            entry if entry_point.is_empty() && entry.starts_with("entrypoint") => {
-                entry_point = entry.replace("[", "").replace("]", "")
-            }
-            cmd if command.is_empty() && cmd.starts_with("command") => command = cmd,
-            wd if workdir.is_empty() && wd.starts_with("workdir") => workdir = wd,
-            hc if health_check.is_empty() && hc.starts_with("healthcheck") => health_check = hc,
-            _ => {}
-        }
+    match inspect.config {
+        Some(container_config) => Ok(ContainerConfigurations::from_container(container_config)),
+        None => Ok(ContainerConfigurations::new()),
     }
-
-    Ok(History {
-        workdir,
-        command,
-        entry_point,
-        health_check,
-    })
 }
 
 #[tokio::main]
@@ -154,9 +125,9 @@ async fn main() -> Result<(), bollard::errors::Error> {
 
     let docker = Docker::connect_with_socket_defaults().unwrap();
 
-    let history = retrieve_history(&docker, &configurations).await?;
+    let container_config = retrieve_config(&docker, &configurations).await?;
 
-    let dockerfile = create_dockerfile(&configurations, history);
+    let dockerfile = create_dockerfile(&configurations, container_config);
 
     let compressed_tar = create_compressed_tar(&dockerfile);
 
@@ -181,8 +152,8 @@ mod history_tests {
     use super::*;
 
     #[tokio::test]
-    async fn test_empty_history() {
-        let history = retrieve_history(
+    async fn test_empty_container_configurations() {
+        let container_configurations = retrieve_config(
             &Docker::connect_with_socket_defaults().unwrap(),
             &DockerConfigurations::from_env(),
         )
@@ -190,19 +161,23 @@ mod history_tests {
         .unwrap();
 
         assert_eq!(
-            history,
-            History {
-                workdir: String::new(),
-                command: String::new(),
-                entry_point: String::new(),
-                health_check: String::new()
+            container_configurations,
+            ContainerConfigurations {
+                workdir: Some(String::from("WORKDIR /")),
+                command: Some(String::from("CMD /hello")),
+                entry_point: None,
+                health_check: None,
+                user: None,
+                env: Some(String::from(
+                    "ENV PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+                )),
             }
         );
     }
 
     #[tokio::test]
     async fn test_history() {
-        let history = retrieve_history(
+        let container_configurations = retrieve_config(
             &Docker::connect_with_socket_defaults().unwrap(),
             &DockerConfigurations {
                 source_image: String::from("ilteoood/xdcc-mule"),
@@ -214,12 +189,14 @@ mod history_tests {
         .unwrap();
 
         assert_eq!(
-            history,
-            History {
-                workdir: String::from("workdir /app"),
-                command: String::new(),
-                entry_point: String::from("entrypoint \"node\" \"index.js\""),
-                health_check: String::new()
+            container_configurations,
+            ContainerConfigurations {
+                workdir: Some(String::from("WORKDIR /app")),
+                command: None,
+                entry_point: Some(String::from("ENTRYPOINT node index.js")),
+                health_check: None,
+                user: None,
+                env: Some(String::from("ENV PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\nENV NODE_VERSION=20.16.0\nENV YARN_VERSION=1.22.22")),
             }
         );
     }
