@@ -86,6 +86,7 @@ async fn run_build(
     }
 }
 
+#[derive(Debug, PartialEq)]
 struct History {
     workdir: String,
     command: String,
@@ -146,4 +147,28 @@ async fn main() -> Result<(), bollard::errors::Error> {
     run_build(build_image_options, &docker, compressed_tar).await;
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn test_create_dockerfile() {
+        let history = retrieve_history(
+            &Docker::connect_with_socket_defaults().unwrap(),
+            &DockerConfigurations::from_env(),
+        )
+        .await
+        .unwrap();
+
+        assert_eq!(
+            history,
+            History {
+                workdir: String::new(),
+                command: String::new(),
+                entry_point: String::new()
+            }
+        );
+    }
 }
