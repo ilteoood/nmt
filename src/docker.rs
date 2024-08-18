@@ -155,7 +155,7 @@ mod history_tests {
     async fn test_empty_container_configurations() {
         let container_configurations = retrieve_config(
             &Docker::connect_with_socket_defaults().unwrap(),
-            &DockerConfigurations::default(),
+            &DockerConfigurations::new(),
         )
         .await
         .unwrap();

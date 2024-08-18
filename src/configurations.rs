@@ -118,7 +118,7 @@ mod tests {
         let configurations = CliConfigurations::parse();
         assert_eq!(
             configurations.node_modules_location,
-            PathBuf::from(env::current_dir().unwrap()).join("node_modules")
+            PathBuf::from("./node_modules")
         );
         assert!(!configurations.dry_run);
         assert!(!configurations.cjs_only);
@@ -147,10 +147,7 @@ mod tests {
 
         assert_eq!(
             configurations.to_dockerfile_env(),
-            format!(
-                "ENV NODE_MODULES_LOCATION={}/node_modules",
-                env::current_dir().unwrap().to_str().unwrap()
-            )
+            "ENV NODE_MODULES_LOCATION=./node_modules"
         );
     }
 
@@ -177,7 +174,7 @@ mod tests {
 
         env::set_var(SOURCE_IMAGE, source_image);
 
-        let configurations = DockerConfigurations::parse();
+        let configurations = DockerConfigurations::new();
 
         assert_eq!(configurations.source_image, source_image);
         assert_eq!(
@@ -198,7 +195,7 @@ mod tests {
 
         env::set_var(SOURCE_IMAGE, source_image);
 
-        let configurations = DockerConfigurations::parse();
+        let configurations = DockerConfigurations::new();
 
         assert_eq!(configurations.source_image, source_image);
         assert_eq!(
@@ -211,10 +208,10 @@ mod tests {
     fn test_docker_default_configurations() {
         clean_docker_env();
 
-        let configurations = DockerConfigurations::parse();
+        let configurations = DockerConfigurations::new();
         assert_eq!(
             configurations.cli.node_modules_location,
-            env::current_dir().unwrap().join("node_modules")
+            PathBuf::from("./node_modules")
         );
         assert_eq!(configurations.source_image, DEFAULT_IMAGE_NAME);
         assert_eq!(
