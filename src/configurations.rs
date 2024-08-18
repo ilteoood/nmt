@@ -9,13 +9,6 @@ const SOURCE_IMAGE: &str = "SOURCE_IMAGE";
 const DESTINATION_IMAGE: &str = "DESTINATION_IMAGE";
 const DEFAULT_IMAGE_NAME: &str = "hello-world";
 
-fn default_node_modules_location() -> PathBuf {
-    let mut path = env::current_dir().unwrap();
-
-    path.push("node_modules");
-    path
-}
-
 #[derive(Debug, Parser, Default)]
 #[command(version, about, long_about)]
 pub struct CliConfigurations {
@@ -23,7 +16,7 @@ pub struct CliConfigurations {
     #[arg(
         short,
         long,
-        default_value = default_node_modules_location().into_os_string(),
+        default_value = "./node_modules",
         env = NODE_MODULES_LOCATION
     )]
     pub node_modules_location: PathBuf,
