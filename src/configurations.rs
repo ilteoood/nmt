@@ -1,11 +1,37 @@
-use std::{
-    env,
-    path::{Path, PathBuf},
-};
+use std::{env, path::PathBuf};
 
+use clap::{command, Parser};
+
+fn default_node_modules_location() -> PathBuf {
+    let mut path = env::current_dir().unwrap();
+
+    path.push("node_modules");
+    path
+}
+
+const NODE_MODULES_LOCATION: &str = "NODE_MODULES_LOCATION";
+const DRY_RUN: &str = "DRY_RUN";
+const CJS_ONLY: &str = "CJS_ONLY";
+const SOURCE_IMAGE: &str = "SOURCE_IMAGE";
+const DESTINATION_IMAGE: &str = "DESTINATION_IMAGE";
+const DEFAULT_IMAGE_NAME: &str = "hello-world";
+
+#[derive(Debug, Parser)]
+#[command(version, about, long_about)]
 pub struct CliConfigurations {
+    /// Path to node_modules
+    #[arg(
+        short,
+        long,
+        default_value = default_node_modules_location().into_os_string(),
+        env = NODE_MODULES_LOCATION
+    )]
     pub node_modules_location: PathBuf,
+    /// Dry run, will not remove files but will print them
+    #[arg(short, long, default_value_t = false, env = DRY_RUN)]
     pub dry_run: bool,
+    /// Removes every ESM file
+    #[arg(short, long, default_value_t = false, env = CJS_ONLY)]
     pub cjs_only: bool,
 }
 
@@ -15,33 +41,13 @@ pub struct DockerConfigurations {
     pub destination_image: String,
 }
 
-const BASE_DIR: &str = "BASE_DIR";
-const DRY_RUN: &str = "DRY_RUN";
-const CJS_ONLY: &str = "CJS_ONLY";
-const SOURCE_IMAGE: &str = "SOURCE_IMAGE";
-const DESTINATION_IMAGE: &str = "DESTINATION_IMAGE";
-const DEFAULT_IMAGE_NAME: &str = "hello-world";
-
 impl CliConfigurations {
-    fn retrieve_current_working_directory() -> Option<String> {
-        Some(env::current_dir().unwrap().to_str().unwrap().to_string())
-    }
-
-    pub fn from_env() -> CliConfigurations {
-        let base_directory = env::var(BASE_DIR)
-            .ok()
-            .or_else(CliConfigurations::retrieve_current_working_directory)
-            .unwrap();
-
-        CliConfigurations {
-            node_modules_location: Path::new(&base_directory).join("node_modules"),
-            dry_run: env::var(DRY_RUN).is_ok(),
-            cjs_only: env::var(CJS_ONLY).is_ok(),
-        }
-    }
-
     pub fn to_dockerfile_env(&self) -> String {
-        let mut env = format!("ENV {}={}", BASE_DIR, self.node_modules_location.display());
+        let mut env = format!(
+            "ENV {}={}",
+            NODE_MODULES_LOCATION,
+            self.node_modules_location.display()
+        );
         if self.dry_run {
             env += format!(
                 "
@@ -76,7 +82,7 @@ impl DockerConfigurations {
         });
 
         DockerConfigurations {
-            cli: CliConfigurations::from_env(),
+            cli: CliConfigurations::parse(),
             source_image,
             destination_image,
         }
@@ -90,7 +96,7 @@ mod tests {
     use std::env;
 
     fn clean_cli_env() {
-        env::remove_var(BASE_DIR);
+        env::remove_var(NODE_MODULES_LOCATION);
         env::remove_var(DRY_RUN);
         env::remove_var(CJS_ONLY);
     }
@@ -99,11 +105,10 @@ mod tests {
     fn test_cli_default_configurations() {
         clean_cli_env();
 
-        let configurations = CliConfigurations::from_env();
+        let configurations = CliConfigurations::parse();
         assert_eq!(
             configurations.node_modules_location,
-            PathBuf::from(CliConfigurations::retrieve_current_working_directory().unwrap())
-                .join("node_modules")
+            PathBuf::from(env::current_dir().unwrap()).join("node_modules")
         );
         assert!(!configurations.dry_run);
         assert!(!configurations.cjs_only);
@@ -111,13 +116,13 @@ mod tests {
 
     #[test]
     fn test_cli_configurations() {
-        env::set_var(BASE_DIR, "BASE_DIR");
+        env::set_var(NODE_MODULES_LOCATION, "NODE_MODULES_LOCATION");
         env::set_var(DRY_RUN, "true");
         env::set_var(CJS_ONLY, "true");
-        let configurations = CliConfigurations::from_env();
+        let configurations = CliConfigurations::parse();
         assert_eq!(
             configurations.node_modules_location,
-            PathBuf::from("BASE_DIR").join("node_modules")
+            PathBuf::from("NODE_MODULES_LOCATION")
         );
         assert!(configurations.dry_run);
         assert!(configurations.cjs_only);
@@ -127,27 +132,27 @@ mod tests {
     fn test_cli_default_to_docker_env() {
         clean_cli_env();
 
-        let configurations = CliConfigurations::from_env();
+        let configurations = CliConfigurations::parse();
 
         assert_eq!(
             configurations.to_dockerfile_env(),
             format!(
-                "ENV BASE_DIR={}/node_modules",
-                CliConfigurations::retrieve_current_working_directory().unwrap()
+                "ENV NODE_MODULES_LOCATION={}/node_modules",
+                env::current_dir().unwrap().to_str().unwrap()
             )
         );
     }
 
     #[test]
     fn test_cli_to_docker_env() {
-        env::set_var(BASE_DIR, "BASE_DIR");
+        env::set_var(NODE_MODULES_LOCATION, "NODE_MODULES_LOCATION");
         env::set_var(DRY_RUN, "true");
         env::set_var(CJS_ONLY, "true");
-        let configurations = CliConfigurations::from_env();
+        let configurations = CliConfigurations::parse();
 
         assert_eq!(
             configurations.to_dockerfile_env(),
-            "ENV BASE_DIR=BASE_DIR/node_modules\nENV DRY_RUN=true\nENV CJS_ONLY=true"
+            "ENV NODE_MODULES_LOCATION=NODE_MODULES_LOCATION\nENV DRY_RUN=true\nENV CJS_ONLY=true"
         );
     }
 
@@ -155,14 +160,13 @@ mod tests {
     fn test_docker_default_configurations() {
         env::remove_var(SOURCE_IMAGE);
         env::remove_var(DESTINATION_IMAGE);
-        env::remove_var(BASE_DIR);
+        env::remove_var(NODE_MODULES_LOCATION);
         env::remove_var(DRY_RUN);
         env::remove_var(CJS_ONLY);
         let configurations = DockerConfigurations::from_env();
         assert_eq!(
             configurations.cli.node_modules_location,
-            PathBuf::from(CliConfigurations::retrieve_current_working_directory().unwrap())
-                .join("node_modules")
+            env::current_dir().unwrap().join("node_modules")
         );
         assert_eq!(configurations.source_image, DEFAULT_IMAGE_NAME);
         assert_eq!(

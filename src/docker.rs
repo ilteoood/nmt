@@ -147,6 +147,7 @@ async fn main() -> Result<(), bollard::errors::Error> {
 
 #[cfg(test)]
 mod history_tests {
+    use clap::Parser;
     use nmt::configurations::CliConfigurations;
 
     use super::*;
@@ -182,7 +183,7 @@ mod history_tests {
             &DockerConfigurations {
                 source_image: String::from("ilteoood/xdcc-mule"),
                 destination_image: String::from("ilteoood/xdcc-mule"),
-                cli: CliConfigurations::from_env(),
+                cli: CliConfigurations::parse(),
             },
         )
         .await

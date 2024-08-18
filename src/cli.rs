@@ -1,9 +1,10 @@
+use clap::Parser;
 use nmt::configurations::CliConfigurations;
 
 mod cleaner;
 
 fn main() {
-    let configurations = &CliConfigurations::from_env();
+    let configurations = &CliConfigurations::parse();
 
     let garbage_paths = cleaner::retrieve_garbage(configurations);
 

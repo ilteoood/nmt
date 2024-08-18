@@ -156,6 +156,7 @@ pub fn clean(configurations: &CliConfigurations, garbage: Vec<PathBuf>) {
 
 #[cfg(test)]
 mod tests {
+    use clap::Parser;
     use std::env;
 
     use super::*;
@@ -174,7 +175,7 @@ mod tests {
 
     #[test]
     fn test_retrieve_garbage() {
-        let configurations = CliConfigurations::from_env();
+        let configurations = CliConfigurations::parse();
         let garbage = retrieve_garbage(&configurations);
         assert!(garbage.is_empty());
     }
@@ -233,7 +234,7 @@ mod tests {
 
     #[test]
     fn test_remove_empty_dirs() {
-        let configurations = CliConfigurations::from_env();
+        let configurations = CliConfigurations::parse();
         remove_empty_dirs(&configurations);
     }
 
