@@ -175,7 +175,7 @@ mod tests {
 
     #[test]
     fn test_retrieve_garbage() {
-        let configurations = CliConfigurations::parse();
+        let configurations = CliConfigurations::new();
         let garbage = retrieve_garbage(&configurations);
         assert!(garbage.is_empty());
     }
@@ -234,7 +234,7 @@ mod tests {
 
     #[test]
     fn test_remove_empty_dirs() {
-        let configurations = CliConfigurations::parse();
+        let configurations = CliConfigurations::new();
         remove_empty_dirs(&configurations);
     }
 

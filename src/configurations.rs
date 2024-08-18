@@ -16,20 +16,7 @@ fn default_node_modules_location() -> PathBuf {
     path
 }
 
-fn default_destination_image() -> String {
-    let source_image = env::var(SOURCE_IMAGE).unwrap_or(String::from(DEFAULT_IMAGE_NAME));
-    let destination_image = env::var(DESTINATION_IMAGE).unwrap_or_else(|_| {
-        source_image.split(":").collect::<Vec<&str>>()[0]
-            .split("@")
-            .collect::<Vec<&str>>()[0]
-            .to_string()
-            + ":trimmed"
-    });
-
-    destination_image
-}
-
-#[derive(Debug, Parser)]
+#[derive(Debug, Parser, Default)]
 #[command(version, about, long_about)]
 pub struct CliConfigurations {
     /// Path to node_modules
@@ -48,18 +35,22 @@ pub struct CliConfigurations {
     pub cjs_only: bool,
 }
 
-#[derive(Debug, Parser)]
+#[derive(Debug, Parser, Default)]
 #[command(version, about, long_about)]
 pub struct DockerConfigurations {
     #[command(flatten)]
     pub cli: CliConfigurations,
     #[arg(short, long, default_value_t = DEFAULT_IMAGE_NAME.to_string(), env = SOURCE_IMAGE)]
     pub source_image: String,
-    #[arg(short='D', long, default_value = default_destination_image(), env = DESTINATION_IMAGE)]
+    #[arg(short='D', long, default_value = "", env = DESTINATION_IMAGE)]
     pub destination_image: String,
 }
 
 impl CliConfigurations {
+    pub fn new() -> Self {
+        Self::parse()
+    }
+
     pub fn to_dockerfile_env(&self) -> String {
         let mut env = format!(
             "ENV {}={}",
@@ -85,6 +76,26 @@ ENV {}={}",
         }
 
         env
+    }
+}
+
+impl DockerConfigurations {
+    pub fn default_destination_image(&mut self) {
+        if self.destination_image.is_empty() {
+            self.destination_image = self.source_image.split(":").collect::<Vec<&str>>()[0]
+                .split("@")
+                .collect::<Vec<&str>>()[0]
+                .to_string()
+                + ":trimmed";
+        }
+    }
+
+    pub fn new() -> Self {
+        let mut docker_configurations = Self::parse();
+
+        docker_configurations.default_destination_image();
+
+        docker_configurations
     }
 }
 
