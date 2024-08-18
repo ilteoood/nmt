@@ -156,7 +156,6 @@ pub fn clean(configurations: &CliConfigurations, garbage: Vec<PathBuf>) {
 
 #[cfg(test)]
 mod tests {
-    use clap::Parser;
     use std::env;
 
     use super::*;

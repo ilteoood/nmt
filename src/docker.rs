@@ -147,7 +147,6 @@ async fn main() -> Result<(), bollard::errors::Error> {
 
 #[cfg(test)]
 mod history_tests {
-    use clap::Parser;
     use nmt::configurations::CliConfigurations;
 
     use super::*;
