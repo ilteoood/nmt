@@ -5,6 +5,7 @@ use clap::{command, Parser};
 const NODE_MODULES_LOCATION: &str = "NODE_MODULES_LOCATION";
 const DRY_RUN: &str = "DRY_RUN";
 const CJS_ONLY: &str = "CJS_ONLY";
+const ESM_ONLY: &str = "ESM_ONLY";
 const SOURCE_IMAGE: &str = "SOURCE_IMAGE";
 const DESTINATION_IMAGE: &str = "DESTINATION_IMAGE";
 const DEFAULT_IMAGE_NAME: &str = "hello-world";
@@ -26,6 +27,9 @@ pub struct CliConfigurations {
     /// Removes every ESM file
     #[arg(short, long, default_value_t = false, env = CJS_ONLY)]
     pub cjs_only: bool,
+    /// Removes every CJS file
+    #[arg(short, long, default_value_t = false, env = ESM_ONLY)]
+    pub esm_only: bool,
 }
 
 #[derive(Debug, Parser, Default)]

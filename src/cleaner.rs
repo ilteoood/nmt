@@ -49,6 +49,8 @@ static GARBAGE_ITEMS: &[&str] = &[
 
 static GARBAGE_ESM_ITEMS: &[&str] = &["esm", "*.esm.js", "*.mjs"];
 
+static GARBAGE_CJS_ITEMS: &[&str] = &["cjs", "*.cjs.js", "*.cjs"];
+
 fn manage_path<'a>(
     garbage_paths: &'a mut Vec<String>,
     configurations: &'a CliConfigurations,
@@ -77,6 +79,10 @@ fn generate_garbage_paths(configurations: &CliConfigurations) -> Vec<String> {
 
     if configurations.cjs_only {
         manage_path_closure(GARBAGE_ESM_ITEMS);
+    }
+
+    if configurations.esm_only {
+        manage_path_closure(GARBAGE_CJS_ITEMS);
     }
 
     drop(manage_path_closure);
@@ -196,6 +202,7 @@ mod tests {
             node_modules_location,
             cjs_only: false,
             dry_run: true,
+            esm_only: false,
         });
 
         let current_dir = current_dir.as_str();
@@ -216,6 +223,7 @@ mod tests {
             node_modules_location,
             cjs_only: true,
             dry_run: true,
+            esm_only: false,
         });
 
         let current_dir = current_dir.as_str();
@@ -244,6 +252,7 @@ mod tests {
             node_modules_location: node_modules_location.clone(),
             cjs_only: false,
             dry_run: true,
+            esm_only: false,
         };
 
         let garbage = retrieve_garbage(configurations);
