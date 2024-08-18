@@ -100,6 +100,13 @@ mod tests {
         env::remove_var(CJS_ONLY);
     }
 
+    fn clean_docker_env() {
+        clean_cli_env();
+
+        env::remove_var(SOURCE_IMAGE);
+        env::remove_var(DESTINATION_IMAGE);
+    }
+
     #[test]
     fn test_cli_default_configurations() {
         clean_cli_env();
@@ -115,6 +122,7 @@ mod tests {
 
     #[test]
     fn test_cli_configurations() {
+        clean_cli_env();
         env::set_var(NODE_MODULES_LOCATION, "NODE_MODULES_LOCATION");
         env::set_var(DRY_RUN, "true");
         env::set_var(CJS_ONLY, "true");
@@ -144,6 +152,7 @@ mod tests {
 
     #[test]
     fn test_cli_to_docker_env() {
+        clean_docker_env();
         env::set_var(NODE_MODULES_LOCATION, "NODE_MODULES_LOCATION");
         env::set_var(DRY_RUN, "true");
         env::set_var(CJS_ONLY, "true");
@@ -156,12 +165,48 @@ mod tests {
     }
 
     #[test]
+    fn test_docker_tag_configurations() {
+        clean_docker_env();
+
+        let source_image = format!("{}:foo", DEFAULT_IMAGE_NAME);
+        let source_image = source_image.as_str();
+
+        env::set_var(SOURCE_IMAGE, source_image);
+
+        let configurations = DockerConfigurations::parse();
+
+        assert_eq!(configurations.source_image, source_image);
+        assert_eq!(
+            configurations.destination_image,
+            format!("{DEFAULT_IMAGE_NAME}:trimmed")
+        );
+    }
+
+    #[test]
+    fn test_docker_sha_configurations() {
+        clean_docker_env();
+
+        let source_image = format!(
+            "{}:@sha256:c34ce3c1fcc0c7431e1392cc3abd0dfe2192ffea1898d5250f199d3ac8d8720f",
+            DEFAULT_IMAGE_NAME
+        );
+        let source_image = source_image.as_str();
+
+        env::set_var(SOURCE_IMAGE, source_image);
+
+        let configurations = DockerConfigurations::parse();
+
+        assert_eq!(configurations.source_image, source_image);
+        assert_eq!(
+            configurations.destination_image,
+            format!("{DEFAULT_IMAGE_NAME}:trimmed")
+        );
+    }
+
+    #[test]
     fn test_docker_default_configurations() {
-        env::remove_var(SOURCE_IMAGE);
-        env::remove_var(DESTINATION_IMAGE);
-        env::remove_var(NODE_MODULES_LOCATION);
-        env::remove_var(DRY_RUN);
-        env::remove_var(CJS_ONLY);
+        clean_docker_env();
+
         let configurations = DockerConfigurations::parse();
         assert_eq!(
             configurations.cli.node_modules_location,
