@@ -1,6 +1,6 @@
 use bollard::secret::ContainerConfig;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Default)]
 pub struct ContainerConfigurations {
     pub workdir: Option<String>,
     pub command: Option<String>,
@@ -11,36 +11,19 @@ pub struct ContainerConfigurations {
 }
 
 impl ContainerConfigurations {
-    pub fn new() -> ContainerConfigurations {
-        ContainerConfigurations {
-            workdir: None,
-            command: None,
-            entry_point: None,
-            health_check: None,
-            user: None,
-            env: None,
-        }
-    }
-
     pub fn from_container(container_config: ContainerConfig) -> ContainerConfigurations {
         ContainerConfigurations {
-            workdir: match container_config.working_dir {
-                Some(workdir) => Some(String::from(format!("WORKDIR {}", workdir))),
-                None => None,
-            },
-            command: match container_config.cmd {
-                Some(command) => Some(String::from(format!("CMD {}", command.join(" ")))),
-                None => None,
-            },
-            entry_point: match container_config.entrypoint {
-                Some(entry_point) => Some(String::from(format!(
-                    "ENTRYPOINT {}",
-                    entry_point.join(" ")
-                ))),
-                None => None,
-            },
+            workdir: container_config
+                .working_dir
+                .map(|workdir| format!("WORKDIR {}", workdir)),
+            command: container_config
+                .cmd
+                .map(|command| format!("CMD {}", command.join(" "))),
+            entry_point: container_config
+                .entrypoint
+                .map(|entry_point| format!("ENTRYPOINT {}", entry_point.join(" "))),
             user: match container_config.user {
-                Some(ref user) if !user.is_empty() => Some(String::from(format!("USER {}", user))),
+                Some(ref user) if !user.is_empty() => Some(format!("USER {}", user)),
                 _ => None,
             },
             health_check: match container_config.healthcheck {
@@ -99,8 +82,7 @@ impl ContainerConfigurations {
             self.health_check.clone(),
         ]
         .iter()
-        .filter_map(|x| x.as_ref())
-        .map(|x| x.clone())
+        .filter_map(|x| x.as_ref().cloned())
         .collect::<Vec<String>>()
         .join("\n")
     }

@@ -116,7 +116,7 @@ async fn retrieve_config(
 
     match inspect.config {
         Some(container_config) => Ok(ContainerConfigurations::from_container(container_config)),
-        None => Ok(ContainerConfigurations::new()),
+        None => Ok(ContainerConfigurations::default()),
     }
 }
 
