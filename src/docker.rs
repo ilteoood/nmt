@@ -2,6 +2,7 @@ use bollard::image::BuildImageOptions;
 use bollard::secret::BuildInfo;
 use bollard::Docker;
 
+use clap::Parser;
 use futures_util::stream::StreamExt;
 use nmt::configurations::DockerConfigurations;
 use nmt::container_configurations::ContainerConfigurations;
@@ -121,7 +122,7 @@ async fn retrieve_config(
 
 #[tokio::main]
 async fn main() -> Result<(), bollard::errors::Error> {
-    let configurations = DockerConfigurations::from_env();
+    let configurations = DockerConfigurations::parse();
 
     let docker = Docker::connect_with_socket_defaults().unwrap();
 
@@ -156,7 +157,7 @@ mod history_tests {
     async fn test_empty_container_configurations() {
         let container_configurations = retrieve_config(
             &Docker::connect_with_socket_defaults().unwrap(),
-            &DockerConfigurations::from_env(),
+            &DockerConfigurations::parse(),
         )
         .await
         .unwrap();

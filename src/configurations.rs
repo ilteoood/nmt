@@ -2,6 +2,13 @@ use std::{env, path::PathBuf};
 
 use clap::{command, Parser};
 
+const NODE_MODULES_LOCATION: &str = "NODE_MODULES_LOCATION";
+const DRY_RUN: &str = "DRY_RUN";
+const CJS_ONLY: &str = "CJS_ONLY";
+const SOURCE_IMAGE: &str = "SOURCE_IMAGE";
+const DESTINATION_IMAGE: &str = "DESTINATION_IMAGE";
+const DEFAULT_IMAGE_NAME: &str = "hello-world";
+
 fn default_node_modules_location() -> PathBuf {
     let mut path = env::current_dir().unwrap();
 
@@ -9,12 +16,18 @@ fn default_node_modules_location() -> PathBuf {
     path
 }
 
-const NODE_MODULES_LOCATION: &str = "NODE_MODULES_LOCATION";
-const DRY_RUN: &str = "DRY_RUN";
-const CJS_ONLY: &str = "CJS_ONLY";
-const SOURCE_IMAGE: &str = "SOURCE_IMAGE";
-const DESTINATION_IMAGE: &str = "DESTINATION_IMAGE";
-const DEFAULT_IMAGE_NAME: &str = "hello-world";
+fn default_destination_image() -> String {
+    let source_image = env::var(SOURCE_IMAGE).unwrap_or(String::from(DEFAULT_IMAGE_NAME));
+    let destination_image = env::var(DESTINATION_IMAGE).unwrap_or_else(|_| {
+        source_image.split(":").collect::<Vec<&str>>()[0]
+            .split("@")
+            .collect::<Vec<&str>>()[0]
+            .to_string()
+            + ":trimmed"
+    });
+
+    destination_image
+}
 
 #[derive(Debug, Parser)]
 #[command(version, about, long_about)]
@@ -35,9 +48,14 @@ pub struct CliConfigurations {
     pub cjs_only: bool,
 }
 
+#[derive(Debug, Parser)]
+#[command(version, about, long_about)]
 pub struct DockerConfigurations {
+    #[command(flatten)]
     pub cli: CliConfigurations,
+    #[arg(short, long, default_value_t = DEFAULT_IMAGE_NAME.to_string(), env = SOURCE_IMAGE)]
     pub source_image: String,
+    #[arg(short='D', long, default_value = default_destination_image(), env = DESTINATION_IMAGE)]
     pub destination_image: String,
 }
 
@@ -67,25 +85,6 @@ ENV {}={}",
         }
 
         env
-    }
-}
-
-impl DockerConfigurations {
-    pub fn from_env() -> DockerConfigurations {
-        let source_image = env::var(SOURCE_IMAGE).unwrap_or(String::from(DEFAULT_IMAGE_NAME));
-        let destination_image = env::var(DESTINATION_IMAGE).unwrap_or_else(|_| {
-            source_image.split(":").collect::<Vec<&str>>()[0]
-                .split("@")
-                .collect::<Vec<&str>>()[0]
-                .to_string()
-                + ":trimmed"
-        });
-
-        DockerConfigurations {
-            cli: CliConfigurations::parse(),
-            source_image,
-            destination_image,
-        }
     }
 }
 
@@ -163,7 +162,7 @@ mod tests {
         env::remove_var(NODE_MODULES_LOCATION);
         env::remove_var(DRY_RUN);
         env::remove_var(CJS_ONLY);
-        let configurations = DockerConfigurations::from_env();
+        let configurations = DockerConfigurations::parse();
         assert_eq!(
             configurations.cli.node_modules_location,
             env::current_dir().unwrap().join("node_modules")
