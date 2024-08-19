@@ -32,9 +32,13 @@ static GARBAGE_ITEMS: &[&str] = &[
     ".editorconfig",
     ".nvmrc",
     "bower.json",
+    ".airtap.yml",
+    "jenkinsfile",
+    "makefile",
     // generic files
     ".*ignore",
     "*eslint*",
+    "*stylelint*",
     "*.min.*",
     "browser.*js",
     ".travis.*",
@@ -46,6 +50,10 @@ static GARBAGE_ITEMS: &[&str] = &[
     ".git*",
     ".tap*",
     ".c8*",
+    "gulpfile.*",
+    "gruntfile.*",
+    ".npm*",
+    "yarn*",
 ];
 
 static GARBAGE_ESM_ITEMS: &[&str] = &["esm", "*.esm.js", "*.mjs"];
