@@ -31,6 +31,7 @@ pub struct CliConfigurations {
     /// Removes every CJS file
     #[arg(short, long, default_value_t = false, env = ESM_ONLY)]
     pub esm_only: bool,
+    /// Minify JS files
     #[arg(short, long, default_value_t = false, env = MINIFY)]
     pub minify: bool,
 }
