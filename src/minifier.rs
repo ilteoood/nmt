@@ -8,7 +8,10 @@ use swc_ecma_ast::EsVersion;
 use crate::glob::retrieve_glob_paths;
 
 fn retrieve_js_files(configurations: &CliConfigurations) -> Vec<PathBuf> {
-    let js_glob_path = configurations.node_modules_location.join("**").join("*js");
+    let js_glob_path = configurations
+        .node_modules_location
+        .join("**")
+        .join("*.*js");
     let js_glob_path = js_glob_path.display();
 
     retrieve_glob_paths(vec![js_glob_path.to_string()])
@@ -39,7 +42,9 @@ fn build_compiler() -> impl Fn(&PathBuf) -> String {
         let output = GLOBALS
             .set(&Default::default(), || {
                 try_with_handler(cm.clone(), Default::default(), |handler| {
-                    let fm = cm.load_file(path.as_path()).expect("failed to load file");
+                    let fm = cm
+                        .load_file(path.as_path())
+                        .expect(format!("failed to load file: {}", path.display()).as_str());
                     Ok(c.process_js_file(fm, handler, &opts)
                         .expect("failed to process file"))
                 })
