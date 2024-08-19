@@ -15,6 +15,9 @@ fn retrieve_js_files(configurations: &CliConfigurations) -> Vec<PathBuf> {
     let js_glob_path = js_glob_path.display();
 
     retrieve_glob_paths(vec![js_glob_path.to_string()])
+        .into_iter()
+        .filter(|path| path.is_file())
+        .collect()
 }
 
 fn build_compiler() -> impl Fn(&PathBuf) -> String {
