@@ -1,6 +1,8 @@
 use nmt::configurations::CliConfigurations;
 
 mod cleaner;
+mod glob;
+mod minifier;
 
 fn main() {
     let configurations = &CliConfigurations::new();
@@ -14,5 +16,11 @@ fn main() {
         garbage_paths
             .iter()
             .for_each(|path| println!("{}", path.display()));
+    }
+
+    if configurations.minify {
+        minifier::minify_js(configurations);
+    } else {
+        println!("Minification skipped");
     }
 }

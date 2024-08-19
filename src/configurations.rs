@@ -8,6 +8,7 @@ const CJS_ONLY: &str = "CJS_ONLY";
 const ESM_ONLY: &str = "ESM_ONLY";
 const SOURCE_IMAGE: &str = "SOURCE_IMAGE";
 const DESTINATION_IMAGE: &str = "DESTINATION_IMAGE";
+const MINIFY: &str = "MINIFY";
 const DEFAULT_IMAGE_NAME: &str = "hello-world";
 
 #[derive(Debug, Parser, Default)]
@@ -30,6 +31,8 @@ pub struct CliConfigurations {
     /// Removes every CJS file
     #[arg(short, long, default_value_t = false, env = ESM_ONLY)]
     pub esm_only: bool,
+    #[arg(short, long, default_value_t = false, env = MINIFY)]
+    pub minify: bool,
 }
 
 #[derive(Debug, Parser, Default)]

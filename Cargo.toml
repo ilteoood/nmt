@@ -10,6 +10,9 @@ flate2 = "1.0.31"
 futures-util = "0.3.30"
 glob = "0.3.1"
 remove_empty_subdirs = "0.1.1"
+swc = "0.284.1"
+swc_common = "0.37.4"
+swc_ecma_ast = "0.118.2"
 tar = "0.4.41"
 tokio = { version = "1.39.2", features = ["full"] }
 

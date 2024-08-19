@@ -1,8 +1,9 @@
-use std::{collections::HashSet, fs::metadata, path::PathBuf};
+use std::{fs::metadata, path::PathBuf};
 
-use glob::{glob_with, MatchOptions};
 use nmt::configurations::CliConfigurations;
 use remove_empty_subdirs::remove_empty_subdirs;
+
+use crate::glob::retrieve_glob_paths;
 
 static GARBAGE_ITEMS: &[&str] = &[
     // folders
@@ -112,38 +113,10 @@ fn delete_path(path: PathBuf) {
     }
 }
 
-fn filter_duplicated_paths(paths: Vec<PathBuf>) -> Vec<PathBuf> {
-    let mut unique_paths = HashSet::<String>::new();
-
-    paths
-        .into_iter()
-        .filter(|path| unique_paths.insert(path.display().to_string()))
-        .collect()
-}
-
 pub fn retrieve_garbage(configurations: &CliConfigurations) -> Vec<PathBuf> {
-    let glob_options = MatchOptions {
-        case_sensitive: false,
-        require_literal_separator: false,
-        require_literal_leading_dot: false,
-    };
+    let garbage_paths = generate_garbage_paths(configurations);
 
-    let mut garbage_paths: Vec<PathBuf> = vec![];
-
-    for path in generate_garbage_paths(configurations) {
-        for entry in glob_with(&path, glob_options)
-            .unwrap_or_else(|_| panic!("Failed to process glob pattern: {}", path))
-        {
-            match entry {
-                Ok(garbage_path) => garbage_paths.push(garbage_path),
-                Err(glob_error) => {
-                    println!("Failed to process glob pattern {}: {}", path, glob_error);
-                }
-            }
-        }
-    }
-
-    filter_duplicated_paths(garbage_paths)
+    retrieve_glob_paths(garbage_paths)
 }
 
 fn remove_empty_dirs(configurations: &CliConfigurations) {
@@ -203,6 +176,7 @@ mod tests {
             cjs_only: false,
             dry_run: true,
             esm_only: false,
+            minify: false,
         });
 
         let current_dir = current_dir.as_str();
@@ -224,6 +198,7 @@ mod tests {
             cjs_only: true,
             dry_run: true,
             esm_only: false,
+            minify: false,
         });
 
         let current_dir = current_dir.as_str();
@@ -253,6 +228,7 @@ mod tests {
             cjs_only: false,
             dry_run: true,
             esm_only: false,
+            minify: false,
         };
 
         let garbage = retrieve_garbage(configurations);
