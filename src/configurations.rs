@@ -58,23 +58,23 @@ impl CliConfigurations {
             NODE_MODULES_LOCATION,
             self.node_modules_location.display()
         );
-        if self.dry_run {
-            env += format!(
-                "
-ENV {}={}",
-                DRY_RUN, self.dry_run
-            )
-            .as_str();
-        }
 
-        if self.cjs_only {
+        vec![
+            (DRY_RUN, self.dry_run),
+            (CJS_ONLY, self.cjs_only),
+            (ESM_ONLY, self.esm_only),
+            (MINIFY, self.minify),
+        ]
+        .iter()
+        .filter(|(_, value)| *value)
+        .for_each(|(env_name, value)| {
             env += format!(
                 "
 ENV {}={}",
-                CJS_ONLY, self.cjs_only
+                env_name, value
             )
             .as_str();
-        }
+        });
 
         env
     }
