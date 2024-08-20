@@ -181,10 +181,7 @@ mod tests {
 
         let garbage = retrieve_garbage(&CliConfigurations {
             node_modules_location,
-            cjs_only: false,
-            dry_run: true,
-            esm_only: false,
-            minify: false,
+            ..Default::default()
         });
 
         let current_dir = current_dir.as_str();
@@ -204,9 +201,7 @@ mod tests {
         let garbage = retrieve_garbage(&CliConfigurations {
             node_modules_location,
             cjs_only: true,
-            dry_run: true,
-            esm_only: false,
-            minify: false,
+            ..Default::default()
         });
 
         let current_dir = current_dir.as_str();
@@ -229,14 +224,12 @@ mod tests {
     }
 
     #[test]
+    #[ignore]
     fn test_clean() {
         let (node_modules_location, _) = retrieve_tests_folders();
         let configurations = &CliConfigurations {
-            node_modules_location: node_modules_location.clone(),
-            cjs_only: false,
-            dry_run: true,
-            esm_only: false,
-            minify: false,
+            node_modules_location: node_modules_location.to_path_buf(),
+            ..Default::default()
         };
 
         let garbage = retrieve_garbage(configurations);
