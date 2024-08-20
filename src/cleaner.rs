@@ -139,6 +139,7 @@ pub fn clean(configurations: &CliConfigurations, garbage: Vec<PathBuf>) {
         delete_path(path);
     }
     remove_empty_dirs(configurations);
+    delete_path(configurations.npm_cache_location.to_path_buf());
 }
 
 #[cfg(test)]
