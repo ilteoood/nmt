@@ -145,7 +145,8 @@ pub fn clean(configurations: &CliConfigurations, garbage: Vec<PathBuf>) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use git2::{build::CheckoutBuilder, Repository, ResetType};
+    use git2::{Repository, ResetType};
+    use serial_test::serial;
     use std::env;
 
     fn base_garbage_structure() -> Vec<String> {
@@ -225,6 +226,7 @@ mod tests {
     }
 
     #[test]
+    #[serial(fs)]
     fn test_clean() {
         let (node_modules_location, current_dir) = retrieve_tests_folders();
         let configurations = &CliConfigurations {

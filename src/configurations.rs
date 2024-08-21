@@ -63,8 +63,7 @@ impl CliConfigurations {
 
         if parsed.npm_cache_location.display().to_string() == DEFAULT_CACHE_DIR {
             parsed.npm_cache_location = dirs::home_dir()
-                .or(Some(Path::new("./").to_path_buf()))
-                .unwrap()
+                .unwrap_or(Path::new("./").to_path_buf())
                 .join(".npm")
         }
 
@@ -78,7 +77,7 @@ impl CliConfigurations {
             self.node_modules_location.display()
         );
 
-        vec![
+        [
             (DRY_RUN, self.dry_run),
             (CJS_ONLY, self.cjs_only),
             (ESM_ONLY, self.esm_only),

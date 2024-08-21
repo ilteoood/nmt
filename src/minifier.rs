@@ -47,7 +47,7 @@ fn build_compiler() -> impl Fn(&PathBuf) -> String {
                 try_with_handler(cm.clone(), Default::default(), |handler| {
                     let fm = cm
                         .load_file(path.as_path())
-                        .expect(format!("failed to load file: {}", path.display()).as_str());
+                        .unwrap_or_else(|_| panic!("failed to load file: {}", path.display()));
                     Ok(c.process_js_file(fm, handler, &opts)
                         .expect("failed to process file"))
                 })
@@ -76,6 +76,8 @@ pub fn minify_js(configurations: &CliConfigurations) {
 mod tests_retrieve_js_files {
     use std::env;
 
+    use serial_test::serial;
+
     use super::*;
 
     fn retrieve_tests_ilteoood() -> PathBuf {
@@ -86,6 +88,7 @@ mod tests_retrieve_js_files {
     }
 
     #[test]
+    #[serial(fs)]
     fn test_retrieve_js_files() {
         let js_paths = retrieve_tests_ilteoood();
 
