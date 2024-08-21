@@ -43,7 +43,7 @@ impl ContainerConfigurations {
                     }
 
                     if let Some(start_interval) = health_check_config.start_interval {
-                        health_check = format!("{} --retries={}", health_check, start_interval);
+                        health_check = format!("{} --start-interval={}", health_check, start_interval);
                     }
 
                     if let Some(retries) = health_check_config.retries {
