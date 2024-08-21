@@ -1,6 +1,6 @@
 use std::{fs, path::PathBuf, sync::Arc};
 
-use nmt::configurations::CliConfigurations;
+use crate::configurations::CliConfigurations;
 use swc::{config, try_with_handler, BoolConfig, BoolOrDataConfig};
 use swc_common::{SourceMap, GLOBALS};
 use swc_ecma_ast::EsVersion;

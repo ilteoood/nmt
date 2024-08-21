@@ -1,6 +1,6 @@
 use std::{fs::metadata, path::PathBuf};
 
-use nmt::configurations::CliConfigurations;
+use crate::configurations::CliConfigurations;
 use remove_empty_subdirs::remove_empty_subdirs;
 
 use crate::glob::retrieve_glob_paths;

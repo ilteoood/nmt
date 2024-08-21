@@ -1,8 +1,4 @@
-use nmt::configurations::CliConfigurations;
-
-mod cleaner;
-mod glob;
-mod minifier;
+use nmt::{cleaner, configurations::CliConfigurations, minifier};
 
 fn main() {
     let configurations = &CliConfigurations::new();
