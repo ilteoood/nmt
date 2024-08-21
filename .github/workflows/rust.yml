@@ -17,6 +17,9 @@ jobs:
         with:
           toolchain: stable
 
+      - name: Test
+        run: cargo test
+
       - name: Build
         run: cargo build
 

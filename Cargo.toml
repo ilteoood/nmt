@@ -18,6 +18,7 @@ tar = "0.4.41"
 tokio = { version = "1.39.2", features = ["full"] }
 
 [dev-dependencies]
+git2 = "0.19.0"
 serial_test = "*"
 
 [[bin]]

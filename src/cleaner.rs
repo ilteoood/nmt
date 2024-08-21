@@ -144,9 +144,9 @@ pub fn clean(configurations: &CliConfigurations, garbage: Vec<PathBuf>) {
 
 #[cfg(test)]
 mod tests {
-    use std::env;
-
     use super::*;
+    use git2::{build::CheckoutBuilder, Repository, ResetType};
+    use std::env;
 
     fn base_garbage_structure() -> Vec<String> {
         vec![
@@ -225,9 +225,8 @@ mod tests {
     }
 
     #[test]
-    #[ignore]
     fn test_clean() {
-        let (node_modules_location, _) = retrieve_tests_folders();
+        let (node_modules_location, current_dir) = retrieve_tests_folders();
         let configurations = &CliConfigurations {
             node_modules_location: node_modules_location.to_path_buf(),
             ..Default::default()
@@ -256,5 +255,13 @@ mod tests {
                 .exists(),
             false
         );
+
+        let repository = Repository::open(current_dir).unwrap();
+        let head = repository.head().unwrap();
+        let head_commit = head.peel_to_commit().unwrap();
+
+        repository
+            .reset(&head_commit.as_object(), ResetType::Hard, None)
+            .unwrap();
     }
 }
