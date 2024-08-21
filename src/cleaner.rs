@@ -177,6 +177,7 @@ mod tests {
     }
 
     #[test]
+    #[serial(fs)]
     fn test_retrieve_all_garbage() {
         let (node_modules_location, current_dir) = retrieve_tests_folders();
 
@@ -196,6 +197,7 @@ mod tests {
     }
 
     #[test]
+    #[serial(fs)]
     fn test_retrieve_all_with_esm_garbage() {
         let (node_modules_location, current_dir) = retrieve_tests_folders();
 
@@ -258,10 +260,10 @@ mod tests {
         );
 
         Command::new("git")
-        .arg("checkout")
-        .arg("--")
-        .arg(node_modules_location)
-        .output()
-        .unwrap();
+            .arg("checkout")
+            .arg("--")
+            .arg(node_modules_location)
+            .output()
+            .unwrap();
     }
 }
