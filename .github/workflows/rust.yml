@@ -7,22 +7,44 @@ on:
 
 jobs:
   build-and-test:
+    strategy:
+      matrix:
+        platform:
+          - target: aarch64-unknown-linux-musl
+            command: both
+
+          - target: i686-unknown-linux-musl
+            command: both
+
+          - target: x86_64-unknown-linux-musl
+            command: both
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Install Rust
-        uses:  actions-rust-lang/setup-rust-toolchain@v1
+      - name: Build binary
+        uses: houseabsolute/actions-rust-cross@v0
         with:
-          toolchain: stable
+          command: ${{ matrix.platform.command }}
+          target: ${{ matrix.platform.target }}
+          args: "--locked --release"
+          strip: true
 
-      - name: Test
-        run: cargo test
-
-      - name: Build
-        run: cargo build
-
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cli-${{ matrix.platform.target }}
+          path: ./target/${{ matrix.platform.target }}/release/cli ./cli
+          retention-days: 1
+  docker_image:
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Download artifactrs
+        uses: actions/download-artifact@v4
       - name: Build and publish image
         uses: ilteoood/docker_buildx@master
         with:

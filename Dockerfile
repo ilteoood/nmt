@@ -1,8 +1,8 @@
-FROM clux/muslrust:stable AS builder
+FROM alpine:latest AS builder
+ARG TARGETARCH
+WORKDIR /builder
 COPY . .
-RUN cargo build --release
-RUN mv ./target/*-unknown-linux-musl/release/cli ./cli
-RUN chmod +x ./cli
+RUN ./scripts/binary.sh $TARGETARCH
 
 FROM scratch
-COPY --from=builder /volume/cli ./cli
+COPY --from=builder /builder/cli ./cli
