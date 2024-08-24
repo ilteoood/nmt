@@ -31,20 +31,21 @@ impl ContainerConfigurations {
                     let mut health_check = String::from("HEALTHCHECK");
 
                     if let Some(interval) = health_check_config.interval {
-                        health_check = format!("{} --interval={}", health_check, interval);
+                        health_check = format!("{} --interval={}ms", health_check, interval);
                     }
 
                     if let Some(timeout) = health_check_config.timeout {
-                        health_check = format!("{} --timeout={}", health_check, timeout);
+                        health_check = format!("{} --timeout={}ms", health_check, timeout);
                     }
 
                     if let Some(start_period) = health_check_config.start_period {
-                        health_check = format!("{} --start-period={}", health_check, start_period);
+                        health_check =
+                            format!("{} --start-period={}ms", health_check, start_period);
                     }
 
                     if let Some(start_interval) = health_check_config.start_interval {
                         health_check =
-                            format!("{} --start-interval={}", health_check, start_interval);
+                            format!("{} --start-interval={}ms", health_check, start_interval);
                     }
 
                     if let Some(retries) = health_check_config.retries {

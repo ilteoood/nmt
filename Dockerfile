@@ -5,4 +5,4 @@ COPY . .
 RUN ./scripts/binary.sh $TARGETARCH
 
 FROM scratch
-COPY --from=builder /builder/cli ./cli
+COPY --from=builder --chmod=755 /builder/cli ./cli
