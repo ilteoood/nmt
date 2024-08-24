@@ -145,18 +145,18 @@ pub fn clean(configurations: &CliConfigurations, garbage: Vec<PathBuf>) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use serial_test::serial;
-    use std::{env, process::Command};
+    use assert_fs::{prelude::*, TempDir};
+    use std::env;
 
     fn base_garbage_structure() -> Vec<String> {
         vec![
-            "/tests/node_modules/@types".to_owned(),
-            "/tests/node_modules/fastify/README.md".to_owned(),
-            "/tests/node_modules/fastify/eslint.config.ts".to_owned(),
-            "/tests/node_modules/busboy/.nvmrc".to_owned(),
-            "/tests/node_modules/busboy/.eslintrc.json".to_owned(),
-            "/tests/node_modules/ilteoood/unlegit.min.js".to_owned(),
-            "/tests/node_modules/@types/tsconfig.json".to_owned(),
+            "/node_modules/@types".to_owned(),
+            "/node_modules/fastify/README.md".to_owned(),
+            "/node_modules/fastify/eslint.config.ts".to_owned(),
+            "/node_modules/busboy/.nvmrc".to_owned(),
+            "/node_modules/busboy/.eslintrc.json".to_owned(),
+            "/node_modules/ilteoood/unlegit.min.js".to_owned(),
+            "/node_modules/@types/tsconfig.json".to_owned(),
         ]
     }
 
@@ -167,19 +167,19 @@ mod tests {
         assert!(garbage.is_empty());
     }
 
-    fn retrieve_tests_folders() -> (PathBuf, String) {
+    fn retrieve_tests_folders() -> (PathBuf, String, TempDir) {
         let current_dir = env::current_dir().unwrap();
+        let tests_dir = current_dir.join("tests");
 
-        (
-            current_dir.join("tests").join("node_modules"),
-            current_dir.display().to_string(),
-        )
+        let temp = TempDir::new().unwrap().into_persistent();
+        temp.copy_from(tests_dir, &["**/*"]).unwrap();
+
+        (temp.join("node_modules"), temp.display().to_string(), temp)
     }
 
     #[test]
-    #[serial(fs)]
     fn test_retrieve_all_garbage() {
-        let (node_modules_location, current_dir) = retrieve_tests_folders();
+        let (node_modules_location, current_dir, temp) = retrieve_tests_folders();
 
         let garbage = retrieve_garbage(&CliConfigurations {
             node_modules_location,
@@ -194,12 +194,13 @@ mod tests {
             .collect();
 
         assert_eq!(garbage, base_garbage_structure());
+
+        temp.close().unwrap();
     }
 
     #[test]
-    #[serial(fs)]
     fn test_retrieve_all_with_esm_garbage() {
-        let (node_modules_location, current_dir) = retrieve_tests_folders();
+        let (node_modules_location, current_dir, temp) = retrieve_tests_folders();
 
         let garbage = retrieve_garbage(&CliConfigurations {
             node_modules_location,
@@ -215,9 +216,11 @@ mod tests {
             .collect();
 
         let mut expected_garbage = base_garbage_structure();
-        expected_garbage.push("/tests/node_modules/ilteoood/legit.esm.js".to_owned());
+        expected_garbage.push("/node_modules/ilteoood/legit.esm.js".to_owned());
 
         assert_eq!(garbage, expected_garbage);
+
+        temp.close().unwrap();
     }
 
     #[test]
@@ -227,9 +230,8 @@ mod tests {
     }
 
     #[test]
-    #[serial(fs)]
     fn test_clean() {
-        let (node_modules_location, _) = retrieve_tests_folders();
+        let (node_modules_location, _, temp) = retrieve_tests_folders();
         let configurations = &CliConfigurations {
             node_modules_location: node_modules_location.to_path_buf(),
             ..Default::default()
@@ -259,11 +261,6 @@ mod tests {
             false
         );
 
-        Command::new("git")
-            .arg("checkout")
-            .arg("--")
-            .arg(node_modules_location)
-            .output()
-            .unwrap();
+        temp.close().unwrap();
     }
 }

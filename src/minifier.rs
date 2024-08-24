@@ -76,8 +76,6 @@ pub fn minify_js(configurations: &CliConfigurations) {
 mod tests_retrieve_js_files {
     use std::env;
 
-    use serial_test::serial;
-
     use super::*;
 
     fn retrieve_tests_ilteoood() -> PathBuf {
@@ -88,7 +86,6 @@ mod tests_retrieve_js_files {
     }
 
     #[test]
-    #[serial(fs)]
     fn test_retrieve_js_files() {
         let js_paths = retrieve_tests_ilteoood();
 
