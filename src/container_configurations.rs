@@ -51,6 +51,10 @@ impl ContainerConfigurations {
                         health_check = format!("{} --retries={}", health_check, retries);
                     }
 
+                    if let Some(test) = health_check_config.test {
+                        health_check = format!("{} {}", health_check, test.join(" "));
+                    }
+
                     Some(health_check)
                 }
                 None => None,
