@@ -39,7 +39,7 @@ jobs:
         uses: Swatinem/rust-cache@v2
 
       - name: Build binary
-        uses: houseabsolute/actions-rust-cross@musl
+        uses: houseabsolute/actions-rust-cross@v0
         with:
           command: build
           target: ${{ matrix.platform.target }}
