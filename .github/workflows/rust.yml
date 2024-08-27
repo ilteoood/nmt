@@ -29,7 +29,7 @@ jobs:
           args: "--locked --release"
           strip: true
         env:
-          CROSS_CONTAINER_OPTS: "--mount=/var/run/docker.sock:/var/run/docker.sock"
+          CROSS_CONTAINER_OPTS: "-v /var/run/docker.sock:/var/run/docker.sock"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
