@@ -62,7 +62,7 @@ impl CliConfigurations {
         let mut parsed = Self::parse();
 
         if parsed.home_location.display().to_string() == DEFAULT_HOME_DIR {
-            parsed.home_location = dirs::home_dir().unwrap_or(Path::new("./").to_path_buf())
+            parsed.home_location = dirs::home_dir().unwrap_or(Path::new(".").to_path_buf())
         }
 
         parsed
