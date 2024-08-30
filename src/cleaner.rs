@@ -36,6 +36,7 @@ static GARBAGE_ITEMS: &[&str] = &[
     ".airtap.yml",
     "jenkinsfile",
     "makefile",
+    ".snyk",
     // generic files
     ".*ignore",
     "*eslint*",
