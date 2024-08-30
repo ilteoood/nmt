@@ -4,7 +4,7 @@ use clap::{command, Parser};
 use dirs;
 
 const NODE_MODULES_LOCATION: &str = "NODE_MODULES_LOCATION";
-const NPM_CACHE_LOCATION: &str = "NPM_CACHE_LOCATION";
+const HOME_LOCATION: &str = "HOME_LOCATION";
 const DRY_RUN: &str = "DRY_RUN";
 const CJS_ONLY: &str = "CJS_ONLY";
 const ESM_ONLY: &str = "ESM_ONLY";
@@ -12,7 +12,7 @@ const SOURCE_IMAGE: &str = "SOURCE_IMAGE";
 const DESTINATION_IMAGE: &str = "DESTINATION_IMAGE";
 const MINIFY: &str = "MINIFY";
 const DEFAULT_IMAGE_NAME: &str = "hello-world";
-const DEFAULT_CACHE_DIR: &str = "~/.npm";
+const DEFAULT_HOME_DIR: &str = "~";
 
 #[derive(Debug, Parser, Default)]
 #[command(version, about, long_about)]
@@ -26,12 +26,12 @@ pub struct CliConfigurations {
     )]
     pub node_modules_location: PathBuf,
     #[arg(
-        short='N',
+        short='H',
         long,
-        default_value = DEFAULT_CACHE_DIR,
-        env = NPM_CACHE_LOCATION
+        default_value = DEFAULT_HOME_DIR,
+        env = HOME_LOCATION
     )]
-    pub npm_cache_location: PathBuf,
+    pub home_location: PathBuf,
     /// Dry run, will not remove files but will print them
     #[arg(short, long, default_value_t = false, env = DRY_RUN)]
     pub dry_run: bool,
@@ -61,10 +61,8 @@ impl CliConfigurations {
     pub fn new() -> Self {
         let mut parsed = Self::parse();
 
-        if parsed.npm_cache_location.display().to_string() == DEFAULT_CACHE_DIR {
-            parsed.npm_cache_location = dirs::home_dir()
-                .unwrap_or(Path::new("./").to_path_buf())
-                .join(".npm")
+        if parsed.home_location.display().to_string() == DEFAULT_HOME_DIR {
+            parsed.home_location = dirs::home_dir().unwrap_or(Path::new("./").to_path_buf())
         }
 
         parsed
