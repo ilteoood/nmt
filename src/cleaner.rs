@@ -153,10 +153,24 @@ fn delete_pnpm_cache(configurations: &CliConfigurations) {
 }
 
 fn delete_lock_files(configurations: &CliConfigurations) {
-    let project_location = configurations.node_modules_location.join("..");
-    delete_path(project_location.join("package-lock.json").to_path_buf());
-    delete_path(project_location.join("yarn.lock").to_path_buf());
-    delete_path(project_location.join("pnpm-lock.yaml").to_path_buf());
+    delete_path(
+        configurations
+            .project_root_location
+            .join("package-lock.json")
+            .to_path_buf(),
+    );
+    delete_path(
+        configurations
+            .project_root_location
+            .join("yarn.lock")
+            .to_path_buf(),
+    );
+    delete_path(
+        configurations
+            .project_root_location
+            .join("pnpm-lock.yaml")
+            .to_path_buf(),
+    );
 }
 
 pub fn clean(configurations: &CliConfigurations, garbage: Vec<PathBuf>) {

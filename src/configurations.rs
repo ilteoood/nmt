@@ -3,7 +3,7 @@ use std::path::{Path, PathBuf};
 use clap::{command, Parser};
 use dirs;
 
-const NODE_MODULES_LOCATION: &str = "NODE_MODULES_LOCATION";
+const PROJECT_ROOT_LOCATION: &str = "PROJECT_ROOT_LOCATION";
 const HOME_LOCATION: &str = "HOME_LOCATION";
 const DRY_RUN: &str = "DRY_RUN";
 const CJS_ONLY: &str = "CJS_ONLY";
@@ -17,14 +17,18 @@ const DEFAULT_HOME_DIR: &str = "~";
 #[derive(Debug, Parser, Default)]
 #[command(version, about, long_about)]
 pub struct CliConfigurations {
-    /// Path to node_modules
+    /// Path to project root
     #[arg(
         short,
         long,
-        default_value = "./node_modules",
-        env = NODE_MODULES_LOCATION
+        default_value = ".",
+        env = PROJECT_ROOT_LOCATION
     )]
+    pub project_root_location: PathBuf,
+    /// Path to node modules
+    #[arg(skip)]
     pub node_modules_location: PathBuf,
+    /// Path to home
     #[arg(
         short='H',
         long,
@@ -65,14 +69,24 @@ impl CliConfigurations {
             parsed.home_location = dirs::home_dir().unwrap_or(Path::new(".").to_path_buf())
         }
 
+        parsed.post_parse();
+
         parsed
+    }
+
+    pub fn post_parse(&mut self) {
+        if self.home_location.display().to_string() == DEFAULT_HOME_DIR {
+            self.home_location = dirs::home_dir().unwrap_or(Path::new(".").to_path_buf())
+        }
+
+        self.node_modules_location = self.project_root_location.join("node_modules");
     }
 
     pub fn to_dockerfile_env(&self) -> String {
         let mut env = format!(
             "ENV {}={}",
-            NODE_MODULES_LOCATION,
-            self.node_modules_location.display()
+            PROJECT_ROOT_LOCATION,
+            self.project_root_location.display()
         );
 
         [
@@ -111,6 +125,7 @@ impl DockerConfigurations {
         let mut docker_configurations = Self::parse();
 
         docker_configurations.default_destination_image();
+        docker_configurations.cli.post_parse();
 
         docker_configurations
     }
@@ -123,7 +138,7 @@ mod tests {
     use std::env;
 
     fn clean_cli_env() {
-        env::remove_var(NODE_MODULES_LOCATION);
+        env::remove_var(PROJECT_ROOT_LOCATION);
         env::remove_var(DRY_RUN);
         env::remove_var(CJS_ONLY);
     }
@@ -139,7 +154,8 @@ mod tests {
     fn test_cli_default_configurations() {
         clean_cli_env();
 
-        let configurations = CliConfigurations::parse();
+        let configurations = CliConfigurations::new();
+        assert_eq!(configurations.project_root_location, PathBuf::from("."));
         assert_eq!(
             configurations.node_modules_location,
             PathBuf::from("./node_modules")
@@ -151,13 +167,17 @@ mod tests {
     #[test]
     fn test_cli_configurations() {
         clean_cli_env();
-        env::set_var(NODE_MODULES_LOCATION, "NODE_MODULES_LOCATION");
+        env::set_var(PROJECT_ROOT_LOCATION, "PROJECT_ROOT_LOCATION");
         env::set_var(DRY_RUN, "true");
         env::set_var(CJS_ONLY, "true");
-        let configurations = CliConfigurations::parse();
+        let configurations = CliConfigurations::new();
+        assert_eq!(
+            configurations.project_root_location,
+            PathBuf::from("PROJECT_ROOT_LOCATION")
+        );
         assert_eq!(
             configurations.node_modules_location,
-            PathBuf::from("NODE_MODULES_LOCATION")
+            PathBuf::from("PROJECT_ROOT_LOCATION/node_modules")
         );
         assert!(configurations.dry_run);
         assert!(configurations.cjs_only);
@@ -171,21 +191,21 @@ mod tests {
 
         assert_eq!(
             configurations.to_dockerfile_env(),
-            "ENV NODE_MODULES_LOCATION=./node_modules"
+            "ENV PROJECT_ROOT_LOCATION=."
         );
     }
 
     #[test]
     fn test_cli_to_docker_env() {
         clean_docker_env();
-        env::set_var(NODE_MODULES_LOCATION, "NODE_MODULES_LOCATION");
+        env::set_var(PROJECT_ROOT_LOCATION, "PROJECT_ROOT_LOCATION");
         env::set_var(DRY_RUN, "true");
         env::set_var(CJS_ONLY, "true");
         let configurations = CliConfigurations::parse();
 
         assert_eq!(
             configurations.to_dockerfile_env(),
-            "ENV NODE_MODULES_LOCATION=NODE_MODULES_LOCATION\nENV DRY_RUN=true\nENV CJS_ONLY=true"
+            "ENV PROJECT_ROOT_LOCATION=PROJECT_ROOT_LOCATION\nENV DRY_RUN=true\nENV CJS_ONLY=true"
         );
     }
 
