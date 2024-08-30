@@ -135,12 +135,7 @@ fn remove_empty_dirs(configurations: &CliConfigurations) {
     }
 }
 
-pub fn clean(configurations: &CliConfigurations, garbage: Vec<PathBuf>) {
-    for path in garbage {
-        delete_path(path);
-    }
-    remove_empty_dirs(configurations);
-    delete_path(configurations.home_location.join(".npm").to_path_buf());
+fn delete_pnpm_cache(configurations: &CliConfigurations) {
     delete_path(
         configurations
             .home_location
@@ -155,6 +150,23 @@ pub fn clean(configurations: &CliConfigurations, garbage: Vec<PathBuf>) {
             .join("pnpm")
             .to_path_buf(),
     );
+}
+
+fn delete_lock_files(configurations: &CliConfigurations) {
+    let project_location = configurations.node_modules_location.join("..");
+    delete_path(project_location.join("package-lock.json").to_path_buf());
+    delete_path(project_location.join("yarn.lock").to_path_buf());
+    delete_path(project_location.join("pnpm-lock.yaml").to_path_buf());
+}
+
+pub fn clean(configurations: &CliConfigurations, garbage: Vec<PathBuf>) {
+    for path in garbage {
+        delete_path(path);
+    }
+    remove_empty_dirs(configurations);
+    delete_path(configurations.home_location.join(".npm").to_path_buf());
+    delete_pnpm_cache(configurations);
+    delete_lock_files(configurations);
 }
 
 #[cfg(test)]
