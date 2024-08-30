@@ -17,6 +17,7 @@ static GARBAGE_ITEMS: &[&str] = &[
     "tests",
     "benchmark",
     "integration",
+    ".bin",
     // extensions
     "*.md",
     "*.markdown",
@@ -144,6 +145,14 @@ pub fn clean(configurations: &CliConfigurations, garbage: Vec<PathBuf>) {
         configurations
             .home_location
             .join(".pnpm-state")
+            .to_path_buf(),
+    );
+    delete_path(
+        configurations
+            .home_location
+            .join(".local")
+            .join("share")
+            .join("pnpm")
             .to_path_buf(),
     );
 }
