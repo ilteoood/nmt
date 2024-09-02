@@ -1,3 +1,5 @@
+//! Minify JavaScript files
+
 use std::{fs, path::PathBuf, sync::Arc};
 
 use crate::configurations::CliConfigurations;
@@ -7,11 +9,16 @@ use swc_ecma_ast::EsVersion;
 
 use crate::glob::retrieve_glob_paths;
 
+/// Retrieve JavaScript files from the node_modules directory
+///
+/// This function retrieves all JavaScript files from the node_modules directory
+/// and returns them as a vector of `PathBuf`s.
 fn retrieve_js_files(configurations: &CliConfigurations) -> Vec<PathBuf> {
     let js_glob_path = configurations
         .node_modules_location
         .join("**")
         .join("*.*js");
+
     let js_glob_path = js_glob_path.display();
 
     retrieve_glob_paths(vec![js_glob_path.to_string()])
@@ -20,6 +27,10 @@ fn retrieve_js_files(configurations: &CliConfigurations) -> Vec<PathBuf> {
         .collect()
 }
 
+/// Build a compiler for minifying JavaScript files
+///
+/// This function builds a compiler for minifying JavaScript files. The compiler
+/// is configured to use the latest ECMAScript version and to minify the code.
 fn build_compiler() -> impl Fn(&PathBuf) -> String {
     let cm = Arc::<SourceMap>::default();
 
@@ -58,6 +69,10 @@ fn build_compiler() -> impl Fn(&PathBuf) -> String {
     };
 }
 
+/// Minify JavaScript files
+///
+/// This function takes a vector of `PathBuf`s and minifies each file. The
+/// minified file is then written to the same location as the original file.
 pub fn minify_js(configurations: &CliConfigurations) {
     let to_compile = retrieve_js_files(configurations);
     let compiler = build_compiler();
