@@ -1,7 +1,9 @@
+//! Retrieves paths using glob patterns.
 use std::{collections::HashSet, path::PathBuf};
 
 use glob::{glob_with, MatchOptions};
 
+/// Filters duplicated paths from a list of paths.
 fn filter_duplicated_paths(paths: Vec<PathBuf>) -> Vec<PathBuf> {
     let mut unique_paths = HashSet::<String>::new();
 
@@ -11,6 +13,7 @@ fn filter_duplicated_paths(paths: Vec<PathBuf>) -> Vec<PathBuf> {
         .collect()
 }
 
+/// Retrieves paths using glob patterns.
 pub fn retrieve_glob_paths(glob_paths: Vec<String>) -> Vec<PathBuf> {
     let glob_options = MatchOptions {
         case_sensitive: false,
