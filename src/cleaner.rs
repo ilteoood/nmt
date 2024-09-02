@@ -1,3 +1,5 @@
+//! Cleaner-related code
+
 use std::{fs::metadata, path::PathBuf};
 
 use crate::configurations::CliConfigurations;
@@ -5,6 +7,7 @@ use remove_empty_subdirs::remove_empty_subdirs;
 
 use crate::glob::retrieve_glob_paths;
 
+/// List of glob patterns for garbage items to remove
 static GARBAGE_ITEMS: &[&str] = &[
     // folders
     "@types",
@@ -58,10 +61,13 @@ static GARBAGE_ITEMS: &[&str] = &[
     "yarn*",
 ];
 
+/// List of glob patterns for garbage items to remove for ESM only
 static GARBAGE_ESM_ITEMS: &[&str] = &["esm", "*.esm.js", "*.mjs"];
 
+/// List of glob patterns for garbage items to remove for CJS only
 static GARBAGE_CJS_ITEMS: &[&str] = &["cjs", "*.cjs.js", "*.cjs"];
 
+/// Creates a closure that takes a list of garbage items and returns a vector of paths to remove
 fn manage_path<'a>(
     garbage_paths: &'a mut Vec<String>,
     configurations: &'a CliConfigurations,
@@ -81,6 +87,7 @@ fn manage_path<'a>(
     }
 }
 
+/// Generates a list of paths to remove based on the configuration
 fn generate_garbage_paths(configurations: &CliConfigurations) -> Vec<String> {
     let mut garbage_paths: Vec<String> = vec![];
 
@@ -101,6 +108,7 @@ fn generate_garbage_paths(configurations: &CliConfigurations) -> Vec<String> {
     garbage_paths
 }
 
+/// Deletes a path
 fn delete_path(path: PathBuf) {
     let path_location = path.display();
     println!("Removing: {}", path_location);
@@ -123,12 +131,14 @@ fn delete_path(path: PathBuf) {
     }
 }
 
+/// Retrieves all garbage items
 pub fn retrieve_garbage(configurations: &CliConfigurations) -> Vec<PathBuf> {
     let garbage_paths = generate_garbage_paths(configurations);
 
     retrieve_glob_paths(garbage_paths)
 }
 
+/// Removes empty directories
 fn remove_empty_dirs(configurations: &CliConfigurations) {
     match remove_empty_subdirs(&configurations.node_modules_location) {
         Ok(_) => println!("Removed empty directories"),
@@ -136,6 +146,7 @@ fn remove_empty_dirs(configurations: &CliConfigurations) {
     }
 }
 
+/// Deletes pnpm cache
 fn delete_pnpm_cache(configurations: &CliConfigurations) {
     delete_path(
         configurations
@@ -153,6 +164,7 @@ fn delete_pnpm_cache(configurations: &CliConfigurations) {
     );
 }
 
+/// Deletes lock files
 fn delete_lock_files(configurations: &CliConfigurations) {
     delete_path(
         configurations
@@ -174,6 +186,7 @@ fn delete_lock_files(configurations: &CliConfigurations) {
     );
 }
 
+/// Cleans up the node_modules directory
 pub fn clean(configurations: &CliConfigurations, garbage: Vec<PathBuf>) {
     for path in garbage {
         delete_path(path);
