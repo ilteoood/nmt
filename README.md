@@ -16,4 +16,61 @@ When you're building a container or a lambda, the size of your application matte
 
 ## Usage
 
-### Install
+`nmt` provides 2 binaries: `cli` and `docker`.
+
+### CLI
+
+`cli`: is the binary that removes unnecessary files and folders from `node_modules`.
+
+```bash
+Usage: cli [OPTIONS]
+
+Options:
+  -p, --project-root-location <PROJECT_ROOT_LOCATION>
+          Path to the project root [env: PROJECT_ROOT_LOCATION=] [default: .]
+  -H, --home-location <HOME_LOCATION>
+          Path to the home directory [env: HOME_LOCATION=] [default: ~]
+  -d, --dry-run
+          Whether to perform a dry run [env: DRY_RUN=]
+  -c, --cjs-only
+          Whether to remove all ESM files [env: CJS_ONLY=]
+  -e, --esm-only
+          Whether to remove all CJS files [env: ESM_ONLY=]
+  -m, --minify
+          Whether to minify JS files [env: MINIFY=]
+  -h, --help
+          Print help
+  -V, --version
+          Print version
+```
+
+### Docker
+
+`docker`: is the binary that builds a shrinked version of the desired Docker image.
+
+
+```bash
+Usage: docker [OPTIONS]
+
+Options:
+  -p, --project-root-location <PROJECT_ROOT_LOCATION>
+          Path to the project root [env: PROJECT_ROOT_LOCATION=] [default: .]
+  -H, --home-location <HOME_LOCATION>
+          Path to the home directory [env: HOME_LOCATION=] [default: ~]
+  -d, --dry-run
+          Whether to perform a dry run [env: DRY_RUN=]
+  -c, --cjs-only
+          Whether to remove all ESM files [env: CJS_ONLY=]
+  -e, --esm-only
+          Whether to remove all CJS files [env: ESM_ONLY=]
+  -m, --minify
+          Whether to minify JS files [env: MINIFY=]
+  -s, --source-image <SOURCE_IMAGE>
+          The source image [env: SOURCE_IMAGE=] [default: hello-world]
+  -D, --destination-image <DESTINATION_IMAGE>
+          The destination image [env: DESTINATION_IMAGE=] [default: ]
+  -h, --help
+          Print help (see more with '--help')
+  -V, --version
+          Print version
+```
