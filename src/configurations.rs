@@ -1,7 +1,11 @@
+//! Configuration-related code
+
 use std::path::{Path, PathBuf};
 
 use clap::{command, Parser};
 use dirs;
+
+/// Configuration for the CLI
 
 const PROJECT_ROOT_LOCATION: &str = "PROJECT_ROOT_LOCATION";
 const HOME_LOCATION: &str = "HOME_LOCATION";
@@ -13,75 +17,69 @@ const DESTINATION_IMAGE: &str = "DESTINATION_IMAGE";
 const MINIFY: &str = "MINIFY";
 const DEFAULT_IMAGE_NAME: &str = "hello-world";
 const DEFAULT_HOME_DIR: &str = "~";
+const DEFAULT_ROOT_LOCATION: &str = ".";
 
 #[derive(Debug, Parser, Default)]
 #[command(version, about, long_about)]
 pub struct CliConfigurations {
-    /// Path to project root
-    #[arg(
-        short,
-        long,
-        default_value = ".",
-        env = PROJECT_ROOT_LOCATION
-    )]
+    /// Path to the project root
+    #[arg(short, long, default_value = DEFAULT_ROOT_LOCATION, env = PROJECT_ROOT_LOCATION)]
     pub project_root_location: PathBuf,
-    /// Path to node modules
+    /// Path to the node_modules directory
     #[arg(skip)]
     pub node_modules_location: PathBuf,
-    /// Path to home
-    #[arg(
-        short='H',
-        long,
-        default_value = DEFAULT_HOME_DIR,
-        env = HOME_LOCATION
-    )]
+    /// Path to the home directory
+    #[arg(short = 'H', long, default_value = DEFAULT_HOME_DIR, env = HOME_LOCATION)]
     pub home_location: PathBuf,
-    /// Dry run, will not remove files but will print them
+    /// Whether to perform a dry run
     #[arg(short, long, default_value_t = false, env = DRY_RUN)]
     pub dry_run: bool,
-    /// Removes every ESM file
+    /// Whether to remove all ESM files
     #[arg(short, long, default_value_t = false, env = CJS_ONLY)]
     pub cjs_only: bool,
-    /// Removes every CJS file
+    /// Whether to remove all CJS files
     #[arg(short, long, default_value_t = false, env = ESM_ONLY)]
     pub esm_only: bool,
-    /// Minify JS files
+    /// Whether to minify JS files
     #[arg(short, long, default_value_t = false, env = MINIFY)]
     pub minify: bool,
 }
 
+/// Configuration for the Docker image
 #[derive(Debug, Parser, Default)]
 #[command(version, about, long_about)]
 pub struct DockerConfigurations {
     #[command(flatten)]
     pub cli: CliConfigurations,
-    #[arg(short, long, default_value_t = DEFAULT_IMAGE_NAME.to_string(), env = SOURCE_IMAGE)]
+    /// The source image
+    #[arg(short, long, default_value = DEFAULT_IMAGE_NAME, env = SOURCE_IMAGE)]
     pub source_image: String,
-    #[arg(short='D', long, default_value = "", env = DESTINATION_IMAGE)]
+    /// The destination image
+    #[arg(short = 'D', long, default_value = "", env = DESTINATION_IMAGE)]
     pub destination_image: String,
 }
 
 impl CliConfigurations {
+    /// Returns a new configuration
     pub fn new() -> Self {
         let mut parsed = Self::parse();
-
-        if parsed.home_location.display().to_string() == DEFAULT_HOME_DIR {
-            parsed.home_location = dirs::home_dir().unwrap_or(Path::new(".").to_path_buf())
-        }
 
         parsed.post_parse();
 
         parsed
     }
 
+    /// Performs post-parsing work
     pub fn post_parse(&mut self) {
         if self.home_location.display().to_string() == DEFAULT_HOME_DIR {
-            self.home_location = dirs::home_dir().unwrap_or(Path::new(".").to_path_buf())
+            self.home_location =
+                dirs::home_dir().unwrap_or(Path::new(DEFAULT_ROOT_LOCATION).to_path_buf())
         }
 
         self.node_modules_location = self.project_root_location.join("node_modules");
     }
 
+    /// Converts the configuration to a Dockerfile
     pub fn to_dockerfile_env(&self) -> String {
         let mut env = format!(
             "ENV {}={}",
@@ -111,6 +109,7 @@ ENV {}={}",
 }
 
 impl DockerConfigurations {
+    /// Sets the default destination image
     pub fn default_destination_image(&mut self) {
         if self.destination_image.is_empty() {
             self.destination_image = self.source_image.split(":").collect::<Vec<&str>>()[0]
@@ -121,6 +120,7 @@ impl DockerConfigurations {
         }
     }
 
+    /// Returns a new configuration
     pub fn new() -> Self {
         let mut docker_configurations = Self::parse();
 
