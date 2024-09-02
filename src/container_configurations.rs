@@ -1,16 +1,24 @@
 use bollard::secret::ContainerConfig;
 
+/// Container configurations
 #[derive(Debug, PartialEq, Default)]
 pub struct ContainerConfigurations {
+    /// WORKDIR instruction
     pub workdir: Option<String>,
+    /// CMD instruction
     pub command: Option<String>,
+    /// ENTRYPOINT instruction
     pub entry_point: Option<String>,
+    /// HEALTHCHECK instruction
     pub health_check: Option<String>,
+    /// USER instruction
     pub user: Option<String>,
+    /// ENV instruction
     pub env: Option<String>,
 }
 
 impl ContainerConfigurations {
+    /// Creates a new `ContainerConfigurations` from a `ContainerConfig`
     pub fn from_container(container_config: ContainerConfig) -> ContainerConfigurations {
         ContainerConfigurations {
             workdir: container_config
@@ -78,6 +86,7 @@ impl ContainerConfigurations {
         }
     }
 
+    /// Converts the container configurations to a Dockerfile
     pub fn to_dockerfile(&self) -> String {
         [
             self.workdir.clone(),
