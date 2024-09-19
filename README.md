@@ -79,5 +79,5 @@ Options:
 
 |image name|size before|size after|
 |---|---|---|
-|hello-world|1.2 MB|1.2 MB|
-|hello-world-2|1.2 MB|1.2 MB|
+|nodered/node-red|569.82 MB|445.91 MB|
+|ilteoood/xdcc-mule|176.68 MB|147.67 MB|
