@@ -74,3 +74,10 @@ Options:
   -V, --version
           Print version
 ```
+
+## Benchmarks
+
+|image name|size before|size after|
+|---|---|---|
+|hello-world|1.2 MB|1.2 MB|
+|hello-world-2|1.2 MB|1.2 MB|
