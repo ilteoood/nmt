@@ -61,7 +61,14 @@ impl ContainerConfigurations {
                     }
 
                     if let Some(test) = health_check_config.test {
-                        health_check = format!("{} {}", health_check, test.join(" "));
+                        health_check = format!(
+                            "{} {}",
+                            health_check,
+                            test.iter()
+                                .map(|item| if item == "CMD-SHELL" { "CMD" } else { item })
+                                .collect::<Vec<&str>>()
+                                .join(" ")
+                        );
                     }
 
                     Some(health_check)
