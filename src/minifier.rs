@@ -31,7 +31,7 @@ fn retrieve_js_files(configurations: &CliConfigurations) -> Vec<PathBuf> {
 ///
 /// This function builds a compiler for minifying JavaScript files. The compiler
 /// is configured to use the latest ECMAScript version and to minify the code.
-fn build_compiler() -> impl Fn(&PathBuf) -> String {
+fn build_compiler() -> impl Fn(&PathBuf) -> Result<String, String> {
     let cm = Arc::<SourceMap>::default();
 
     let opts = config::Options {
@@ -51,21 +51,21 @@ fn build_compiler() -> impl Fn(&PathBuf) -> String {
         ..Default::default()
     };
 
-    return move |path: &PathBuf| -> String {
+    return move |path: &PathBuf| -> Result<String, String> {
         let c = swc::Compiler::new(cm.clone());
-        let output = GLOBALS
-            .set(&Default::default(), || {
-                try_with_handler(cm.clone(), Default::default(), |handler| {
-                    let fm = cm
-                        .load_file(path.as_path())
-                        .unwrap_or_else(|_| panic!("failed to load file: {}", path.display()));
-                    Ok(c.process_js_file(fm, handler, &opts)
-                        .expect("failed to process file"))
-                })
-            })
-            .unwrap();
+        let output = GLOBALS.set(&Default::default(), || {
+            try_with_handler(cm.clone(), Default::default(), |handler| {
+                let fm = cm
+                    .load_file(path.as_path())
+                    .unwrap_or_else(|_| panic!("failed to load file: {}", path.display()));
 
-        output.code
+                c.process_js_file(fm, handler, &opts)
+            })
+        });
+
+        output
+            .map(|output| output.code)
+            .map_err(|error| format!("failed to process file: {}", error))
     };
 }
 
@@ -78,11 +78,14 @@ pub fn minify_js(configurations: &CliConfigurations) {
     let compiler = build_compiler();
 
     for path in to_compile {
-        let code = compiler(&path);
+        let transform_output = compiler(&path);
 
-        match fs::write(&path, code) {
-            Ok(_) => println!("File minified: {}", path.display()),
-            Err(error) => println!("Failed to write file {}: {}", path.display(), error),
+        match transform_output {
+            Ok(code) => match fs::write(&path, code) {
+                Ok(_) => println!("File minified: {}", path.display()),
+                Err(error) => println!("Failed to write file {}: {}", path.display(), error),
+            },
+            Err(error) => println!("Failed to minify file {}: {}", path.display(), error),
         }
     }
 }
@@ -138,7 +141,7 @@ mod tests_compile {
         let compiler = build_compiler();
 
         assert_eq!(
-            compiler(&js_path),
+            compiler(&js_path).unwrap(),
             "import t from\"path\";export default function(e){return\".md\"===t.extname(e)}"
         );
     }
@@ -150,7 +153,7 @@ mod tests_compile {
         let compiler = build_compiler();
 
         assert_eq!(
-            compiler(&js_path),
+            compiler(&js_path).unwrap(),
             "const e=require(\"path\");module.exports=function(t){return\".md\"===e.extname(t)};"
         );
     }
