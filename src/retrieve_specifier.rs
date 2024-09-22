@@ -50,8 +50,10 @@ impl<'a> Visitor {
                 .insert(self.current_path.parent().unwrap().join(module));
         } else if module.starts_with("..") || module.starts_with(".") {
             let path = self.retrieve_file_path(module);
-            self.paths_found.insert(path.clone());
-            self.files_to_visit.push_back(path);
+            let is_new_path = self.paths_found.insert(path.clone());
+            if is_new_path {
+                self.files_to_visit.push_back(path);
+            }
         } else if !module.starts_with("node:") && !self.modules_visited.contains(&module) {
             self.modules_to_visit.insert(module);
         }
@@ -91,12 +93,9 @@ impl<'a> Visitor {
         loop {
             match self.files_to_visit.pop_front() {
                 Some(path) => {
-                    if !self.paths_found.contains(&path) {
-                        println!("Visiting: {}", path.display());
-                        self.visit_path(path);
+                    self.visit_path(path);
 
-                        self.resolve_modules_to_visit();
-                    }
+                    self.resolve_modules_to_visit();
                 }
                 None => break,
             }
