@@ -12,19 +12,15 @@ use oxc_span::SourceType;
 
 struct Visitor {
     modules_to_visit: HashSet<String>,
-    modules_visited: HashSet<String>,
     files_to_visit: VecDeque<PathBuf>,
     paths_found: HashSet<PathBuf>,
     current_path: PathBuf,
-    root_path: PathBuf,
 }
 
 impl<'a> Visitor {
     fn new(path: PathBuf) -> Self {
         Self {
-            root_path: path.clone(),
             modules_to_visit: HashSet::new(),
-            modules_visited: HashSet::new(),
             files_to_visit: VecDeque::from([path.join("dist").join("index.js")]),
             paths_found: HashSet::new(),
             current_path: PathBuf::new(),
@@ -62,7 +58,7 @@ impl<'a> Visitor {
         } else if module.starts_with("..") || module.starts_with(".") {
             let path = self.retrieve_file_path(module);
             self.add_path_to_visit(path);
-        } else if !module.starts_with("node:") && !self.modules_visited.contains(&module) {
+        } else if !module.starts_with("node:") {
             self.modules_to_visit.insert(module);
         }
     }
@@ -80,7 +76,7 @@ impl<'a> Visitor {
             .modules_to_visit
             .iter()
             .map(
-                |specifier| match resolver.resolve(&self.root_path, specifier) {
+                |specifier| match resolver.resolve(&self.current_path, specifier) {
                     Err(_) => None,
                     Ok(resolution) => Some(resolution.full_path()),
                 },
@@ -91,9 +87,6 @@ impl<'a> Visitor {
         for path in paths_to_add {
             self.add_path_to_visit(path);
         }
-
-        self.modules_visited
-            .extend(self.modules_to_visit.iter().cloned());
 
         self.modules_to_visit.clear();
     }
