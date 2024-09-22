@@ -4,6 +4,7 @@ use std::{collections::HashSet, path::PathBuf};
 use oxc_allocator::Allocator;
 use oxc_ast::{ast::Expression, Visit};
 use oxc_parser::{ParseOptions, Parser};
+use oxc_resolver::{ResolveOptions, Resolver};
 use oxc_span::SourceType;
 
 struct Visitor {
@@ -48,6 +49,17 @@ impl<'a> Visit<'a> for Visitor {
                 }
             }
         }
+    }
+}
+
+fn resolve(path: PathBuf, specifier: String) -> String {
+    let options = ResolveOptions {
+        ..ResolveOptions::default()
+    };
+
+    match Resolver::new(options).resolve(path, &specifier) {
+        Err(error) => format!("Error: {error}"),
+        Ok(resolution) => format!("Resolved: {:?}", resolution.full_path()),
     }
 }
 
