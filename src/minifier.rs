@@ -154,7 +154,7 @@ mod tests_compile {
 
         assert_eq!(
             compiler(&js_path).unwrap(),
-            "const e=require(\"path\");module.exports=function(t){return\".md\"===e.extname(t)};"
+            "const e=require(\"path\");require.resolve(\"stream\"),module.exports=function(r){return\".md\"===e.extname(r)};"
         );
     }
 }
