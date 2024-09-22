@@ -44,16 +44,24 @@ impl<'a> Visitor {
         .unwrap()
     }
 
+    fn add_path_to_visit(&mut self, path: PathBuf) {
+        let is_new_path = self.add_path(path.clone());
+        if is_new_path {
+            self.files_to_visit.push_back(path);
+        }
+    }
+
+    fn add_path(&mut self, path: PathBuf) -> bool {
+        let path = path.canonicalize().unwrap();
+        self.paths_found.insert(path.clone())
+    }
+
     fn insert_module_to_visit(&mut self, module: String) {
         if module.ends_with(".json") {
-            self.paths_found
-                .insert(self.current_path.parent().unwrap().join(module));
+            self.add_path(self.current_path.parent().unwrap().join(module));
         } else if module.starts_with("..") || module.starts_with(".") {
             let path = self.retrieve_file_path(module);
-            let is_new_path = self.paths_found.insert(path.clone());
-            if is_new_path {
-                self.files_to_visit.push_back(path);
-            }
+            self.add_path_to_visit(path);
         } else if !module.starts_with("node:") && !self.modules_visited.contains(&module) {
             self.modules_to_visit.insert(module);
         }
@@ -68,19 +76,20 @@ impl<'a> Visitor {
     fn resolve_modules_to_visit(&mut self) {
         let resolver = Resolver::new(ResolveOptions::default());
 
-        for specifier in &self.modules_to_visit {
-            match resolver.resolve(&self.root_path, specifier) {
-                Err(error) => {
-                    println!(
-                        "Resolve error: cannot find {specifier} from {} {error}",
-                        self.root_path.display()
-                    );
-                }
-                Ok(resolution) => {
-                    self.files_to_visit.push_back(resolution.full_path());
-                    self.paths_found.insert(resolution.full_path());
-                }
-            };
+        let paths_to_add: Vec<PathBuf> = self
+            .modules_to_visit
+            .iter()
+            .map(
+                |specifier| match resolver.resolve(&self.root_path, specifier) {
+                    Err(_) => None,
+                    Ok(resolution) => Some(resolution.full_path()),
+                },
+            )
+            .flatten()
+            .collect();
+
+        for path in paths_to_add {
+            self.add_path_to_visit(path);
         }
 
         self.modules_visited
@@ -189,7 +198,7 @@ mod tests {
 #[cfg(test)]
 mod resolve_tests {
     use super::*;
-    use std::env;
+    use std::{env, fs};
 
     fn retrieve_tests_dir() -> PathBuf {
         let current_dir = env::current_dir().unwrap();
@@ -205,6 +214,14 @@ mod resolve_tests {
 
         let result = visitor.run();
 
-        assert_eq!(result, HashSet::new());
+        let mut array: Vec<String> = result
+            .into_iter()
+            .map(|path| path.to_str().unwrap().to_owned())
+            .collect();
+        array.sort();
+
+        fs::write("./test.json", format!("{:?}", array)).unwrap();
+
+        assert_eq!(array.len(), 1001);
     }
 }
