@@ -53,11 +53,7 @@ impl<'a> Visit<'a> for Visitor {
 }
 
 fn resolve(path: PathBuf, specifier: String) -> String {
-    let options = ResolveOptions {
-        ..ResolveOptions::default()
-    };
-
-    match Resolver::new(options).resolve(path, &specifier) {
+    match Resolver::new(ResolveOptions::default()).resolve(path, &specifier) {
         Err(error) => format!("Error: {error}"),
         Ok(resolution) => format!("Resolved: {:?}", resolution.full_path()),
     }
