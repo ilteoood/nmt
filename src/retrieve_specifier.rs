@@ -7,45 +7,46 @@ use oxc_parser::{ParseOptions, Parser};
 use oxc_span::SourceType;
 
 struct Visitor {
-    found_modules: HashSet<String>,
-    visited_modules: HashSet<String>,
+    modules_to_visit: HashSet<String>,
+    modules_visited: HashSet<String>,
 }
 
 impl<'a> Visitor {
     fn new() -> Self {
         Self {
-            found_modules: HashSet::new(),
-            visited_modules: HashSet::new(),
+            modules_to_visit: HashSet::new(),
+            modules_visited: HashSet::new(),
         }
     }
 
-    fn insert_found_module(&mut self, module: String) {
-        if !module.starts_with("node:") {
-            self.found_modules.insert(module);
+    fn insert_module_to_visit(&mut self, module: String) {
+        if !module.starts_with("node:") && !self.modules_visited.contains(&module) {
+            self.modules_to_visit.insert(module);
         }
     }
 
     fn insert_first_argument(&mut self, it: &oxc_ast::ast::CallExpression<'a>) {
         if let Some(Expression::StringLiteral(lit)) = &it.arguments[0].as_expression() {
-            self.insert_found_module(lit.value.to_string());
+            self.insert_module_to_visit(lit.value.to_string());
         }
     }
 }
 
 impl<'a> Visit<'a> for Visitor {
     fn visit_import_declaration(&mut self, it: &oxc_ast::ast::ImportDeclaration<'a>) {
-        self.insert_found_module(it.source.to_string());
+        self.insert_module_to_visit(it.source.to_string());
     }
 
-    fn visit_static_member_expression(&mut self, it: &oxc_ast::ast::StaticMemberExpression<'a>) {}
-
     fn visit_call_expression(&mut self, it: &oxc_ast::ast::CallExpression<'a>) {
-        if it.is_require_call() {
-            self.insert_first_argument(it);
-        } else if it.callee.is_specific_member_access("require", "resolve")
-            && it.callee_name() == Some("resolve")
-        {
-            self.insert_first_argument(it);
+        match it.common_js_require() {
+            Some(lit) => self.insert_module_to_visit(lit.value.to_string()),
+            None => {
+                if it.callee.is_specific_member_access("require", "resolve")
+                    && it.callee_name() == Some("resolve")
+                {
+                    self.insert_first_argument(it);
+                }
+            }
         }
     }
 }
@@ -66,7 +67,7 @@ fn specifier(path: &PathBuf) -> Result<HashSet<String>, ()> {
 
     visitor.visit_program(&ret.program);
 
-    Ok(visitor.found_modules)
+    Ok(visitor.modules_to_visit)
 }
 
 #[cfg(test)]
