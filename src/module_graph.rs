@@ -18,10 +18,10 @@ struct Visitor {
 }
 
 impl<'a> Visitor {
-    fn new(path: PathBuf) -> Self {
+    fn new(entry_point: PathBuf) -> Self {
         Self {
             modules_to_visit: HashSet::new(),
-            files_to_visit: VecDeque::from([path.join("dist").join("index.js")]),
+            files_to_visit: VecDeque::from([entry_point]),
             paths_found: HashSet::new(),
             current_path: PathBuf::new(),
         }
@@ -91,7 +91,7 @@ impl<'a> Visitor {
         self.modules_to_visit.clear();
     }
 
-    fn run(&mut self) -> HashSet<PathBuf> {
+    fn run(&mut self) -> Vec<PathBuf> {
         loop {
             match self.files_to_visit.pop_front() {
                 Some(path) => {
@@ -103,7 +103,7 @@ impl<'a> Visitor {
             }
         }
 
-        self.paths_found.clone()
+        self.paths_found.drain().collect()
     }
 
     fn visit_path(&mut self, path: PathBuf) {
@@ -150,7 +150,7 @@ impl<'a> Visit<'a> for Visitor {
 }
 
 #[cfg(test)]
-mod tests {
+mod specifier_tests {
     use std::env;
 
     use super::*;
@@ -167,9 +167,13 @@ mod tests {
             .join("ilteoood")
             .join("legit.esm.js");
 
-        // Visitor::new().visit_path(path);
+        let mut visitor = Visitor::new(path.clone());
+        visitor.visit_path(path);
 
-        // assert_eq!(result.unwrap(), HashSet::from(["path".to_string()]));
+        assert_eq!(
+            visitor.modules_to_visit,
+            HashSet::from(["path".to_string()])
+        );
     }
 
     #[test]
@@ -179,19 +183,20 @@ mod tests {
             .join("ilteoood")
             .join("legit.js");
 
-        // Visitor::new().visit_path(path);
+        let mut visitor = Visitor::new(path.clone());
+        visitor.visit_path(path);
 
-        /*assert_eq!(
-            result.unwrap(),
+        assert_eq!(
+            visitor.modules_to_visit,
             HashSet::from(["path".to_string(), "stream".to_string()])
-        );*/
+        );
     }
 }
 
 #[cfg(test)]
 mod resolve_tests {
     use super::*;
-    use std::{env, fs};
+    use std::env;
 
     fn retrieve_tests_dir() -> PathBuf {
         let current_dir = env::current_dir().unwrap();
@@ -200,21 +205,19 @@ mod resolve_tests {
 
     #[test]
     fn test_resolve() {
-        let path =
-            PathBuf::from("/Users/ilteoood/Documents/git/personal/xdcc-mule/packages/server");
+        let tests_dir = retrieve_tests_dir();
+        let path = tests_dir.join("index.js");
 
         let mut visitor = Visitor::new(path);
 
         let result = visitor.run();
 
-        let mut array: Vec<String> = result
-            .into_iter()
-            .map(|path| path.to_str().unwrap().to_owned())
-            .collect();
-        array.sort();
-
-        fs::write("./test.json", format!("{:?}", array)).unwrap();
-
-        assert_eq!(array.len(), 1001);
+        assert_eq!(
+            result,
+            vec![tests_dir
+                .join("node_modules")
+                .join("ilteoood")
+                .join("legit.js")]
+        );
     }
 }

@@ -1,0 +1,1 @@
+const legit = require('ilteoood/legit');
