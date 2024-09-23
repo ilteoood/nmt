@@ -94,15 +94,10 @@ impl<'a> Visitor {
     }
 
     pub fn run(&mut self) -> HashSet<PathBuf> {
-        loop {
-            match self.files_to_visit.pop_front() {
-                Some(path) => {
-                    self.visit_path(path);
+        while let Some(path) = self.files_to_visit.pop_front() {
+            self.visit_path(path);
 
-                    self.resolve_modules_to_visit();
-                }
-                None => break,
-            }
+            self.resolve_modules_to_visit();
         }
 
         self.paths_found.drain().collect()
