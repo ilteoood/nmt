@@ -8,6 +8,7 @@ use dirs;
 /// Configuration for the CLI
 
 const PROJECT_ROOT_LOCATION: &str = "PROJECT_ROOT_LOCATION";
+const ENTRY_POINT_LOCATION: &str = "ENTRY_POINT_LOCATION";
 const HOME_LOCATION: &str = "HOME_LOCATION";
 const DRY_RUN: &str = "DRY_RUN";
 const SOURCE_IMAGE: &str = "SOURCE_IMAGE";
@@ -16,6 +17,7 @@ const MINIFY: &str = "MINIFY";
 const DEFAULT_IMAGE_NAME: &str = "hello-world";
 const DEFAULT_HOME_DIR: &str = "~";
 const DEFAULT_ROOT_LOCATION: &str = ".";
+const DEFAULT_ENTRY_POINT_LOCATION: &str = "dist/index.js";
 
 #[derive(Debug, Parser, Default)]
 #[command(version, about, long_about)]
@@ -24,8 +26,8 @@ pub struct CliConfigurations {
     #[arg(short, long, default_value = DEFAULT_ROOT_LOCATION, env = PROJECT_ROOT_LOCATION)]
     pub project_root_location: PathBuf,
     /// Path to the node_modules directory
-    #[arg(skip)]
-    pub node_modules_location: PathBuf,
+    #[arg(short, long, default_value = DEFAULT_ENTRY_POINT_LOCATION, env = ENTRY_POINT_LOCATION)]
+    pub entry_point_location: PathBuf,
     /// Path to the home directory
     #[arg(short = 'H', long, default_value = DEFAULT_HOME_DIR, env = HOME_LOCATION)]
     pub home_location: PathBuf,
@@ -68,7 +70,9 @@ impl CliConfigurations {
                 dirs::home_dir().unwrap_or(Path::new(DEFAULT_ROOT_LOCATION).to_path_buf())
         }
 
-        self.node_modules_location = self.project_root_location.join("node_modules");
+        if self.entry_point_location.display().to_string() == DEFAULT_ENTRY_POINT_LOCATION {
+            self.entry_point_location = self.project_root_location.join(&self.entry_point_location);
+        }
     }
 
     /// Converts the configuration to a Dockerfile
@@ -143,8 +147,8 @@ mod tests {
         let configurations = CliConfigurations::new();
         assert_eq!(configurations.project_root_location, PathBuf::from("."));
         assert_eq!(
-            configurations.node_modules_location,
-            PathBuf::from("./node_modules")
+            configurations.entry_point_location,
+            PathBuf::from("./dist/index.js")
         );
         assert!(!configurations.dry_run);
     }
@@ -160,8 +164,8 @@ mod tests {
             PathBuf::from("PROJECT_ROOT_LOCATION")
         );
         assert_eq!(
-            configurations.node_modules_location,
-            PathBuf::from("PROJECT_ROOT_LOCATION/node_modules")
+            configurations.entry_point_location,
+            PathBuf::from("PROJECT_ROOT_LOCATION/dist/index.js")
         );
         assert!(configurations.dry_run);
     }
@@ -235,9 +239,10 @@ mod tests {
         clean_docker_env();
 
         let configurations = DockerConfigurations::new();
+        assert_eq!(configurations.cli.project_root_location, PathBuf::from("."));
         assert_eq!(
-            configurations.cli.node_modules_location,
-            PathBuf::from("./node_modules")
+            configurations.cli.entry_point_location,
+            PathBuf::from("./dist/index.js")
         );
         assert_eq!(configurations.source_image, DEFAULT_IMAGE_NAME);
         assert_eq!(

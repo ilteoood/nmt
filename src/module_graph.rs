@@ -10,7 +10,9 @@ use oxc_parser::{ParseOptions, Parser};
 use oxc_resolver::{ResolveOptions, Resolver};
 use oxc_span::SourceType;
 
-struct Visitor {
+use crate::configurations::CliConfigurations;
+
+pub struct Visitor {
     modules_to_visit: HashSet<String>,
     files_to_visit: VecDeque<PathBuf>,
     paths_found: HashSet<PathBuf>,
@@ -18,10 +20,10 @@ struct Visitor {
 }
 
 impl<'a> Visitor {
-    fn new(entry_point: PathBuf) -> Self {
+    pub fn new(configurations: &CliConfigurations) -> Self {
         Self {
             modules_to_visit: HashSet::new(),
-            files_to_visit: VecDeque::from([entry_point]),
+            files_to_visit: VecDeque::from([configurations.entry_point_location.clone()]),
             paths_found: HashSet::new(),
             current_path: PathBuf::new(),
         }
@@ -75,13 +77,12 @@ impl<'a> Visitor {
         let paths_to_add: Vec<PathBuf> = self
             .modules_to_visit
             .iter()
-            .map(
+            .filter_map(
                 |specifier| match resolver.resolve(&self.current_path, specifier) {
                     Err(_) => None,
                     Ok(resolution) => Some(resolution.full_path()),
                 },
             )
-            .flatten()
             .collect();
 
         for path in paths_to_add {
@@ -91,16 +92,11 @@ impl<'a> Visitor {
         self.modules_to_visit.clear();
     }
 
-    fn run(&mut self) -> Vec<PathBuf> {
-        loop {
-            match self.files_to_visit.pop_front() {
-                Some(path) => {
-                    self.visit_path(path);
+    pub fn run(&mut self) -> HashSet<PathBuf> {
+        while let Some(path) = self.files_to_visit.pop_front() {
+            self.visit_path(path);
 
-                    self.resolve_modules_to_visit();
-                }
-                None => break,
-            }
+            self.resolve_modules_to_visit();
         }
 
         self.paths_found.drain().collect()
@@ -167,7 +163,10 @@ mod specifier_tests {
             .join("ilteoood")
             .join("legit.esm.js");
 
-        let mut visitor = Visitor::new(path.clone());
+        let mut visitor = Visitor::new(&CliConfigurations {
+            entry_point_location: path.clone(),
+            ..Default::default()
+        });
         visitor.visit_path(path);
 
         assert_eq!(
@@ -183,7 +182,10 @@ mod specifier_tests {
             .join("ilteoood")
             .join("legit.js");
 
-        let mut visitor = Visitor::new(path.clone());
+        let mut visitor = Visitor::new(&CliConfigurations {
+            entry_point_location: path.clone(),
+            ..Default::default()
+        });
         visitor.visit_path(path);
 
         assert_eq!(
@@ -208,16 +210,19 @@ mod resolve_tests {
         let tests_dir = retrieve_tests_dir();
         let path = tests_dir.join("index.js");
 
-        let mut visitor = Visitor::new(path);
+        let mut visitor = Visitor::new(&CliConfigurations {
+            entry_point_location: path,
+            ..Default::default()
+        });
 
         let result = visitor.run();
 
         assert_eq!(
             result,
-            vec![tests_dir
+            HashSet::from([tests_dir
                 .join("node_modules")
                 .join("ilteoood")
-                .join("legit.js")]
+                .join("legit.js")])
         );
     }
 }

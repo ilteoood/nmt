@@ -1,32 +1,10 @@
 //! Minify JavaScript files
 
-use std::{fs, path::PathBuf, sync::Arc};
+use std::{collections::HashSet, fs, path::PathBuf, sync::Arc};
 
-use crate::configurations::CliConfigurations;
 use swc::{config, try_with_handler, BoolConfig, BoolOrDataConfig};
 use swc_common::{SourceMap, GLOBALS};
 use swc_ecma_ast::EsVersion;
-
-use crate::glob::retrieve_glob_paths;
-
-/// Retrieve JavaScript files from the node_modules directory
-///
-/// This function retrieves all JavaScript files from the node_modules directory
-/// and returns them as a vector of `PathBuf`s.
-fn retrieve_js_files(configurations: &CliConfigurations) -> Vec<PathBuf> {
-    let js_glob_path = configurations
-        .node_modules_location
-        .join("**")
-        .join("*.*js");
-
-    let js_glob_path = js_glob_path.display();
-
-    retrieve_glob_paths(vec![js_glob_path.to_string()])
-        .into_iter()
-        .filter(|path| path.is_file())
-        .collect()
-}
-
 /// Build a compiler for minifying JavaScript files
 ///
 /// This function builds a compiler for minifying JavaScript files. The compiler
@@ -73,51 +51,19 @@ fn build_compiler() -> impl Fn(&PathBuf) -> Result<String, String> {
 ///
 /// This function takes a vector of `PathBuf`s and minifies each file. The
 /// minified file is then written to the same location as the original file.
-pub fn minify_js(configurations: &CliConfigurations) {
-    let to_compile = retrieve_js_files(configurations);
+pub fn minify_js(module_graph: &HashSet<PathBuf>) {
     let compiler = build_compiler();
 
-    for path in to_compile {
-        let transform_output = compiler(&path);
+    for path in module_graph.iter() {
+        let transform_output = compiler(path);
 
         match transform_output {
-            Ok(code) => match fs::write(&path, code) {
+            Ok(code) => match fs::write(path, code) {
                 Ok(_) => println!("File minified: {}", path.display()),
                 Err(error) => println!("Failed to write file {}: {}", path.display(), error),
             },
             Err(error) => println!("Failed to minify file {}: {}", path.display(), error),
         }
-    }
-}
-
-#[cfg(test)]
-mod tests_retrieve_js_files {
-    use std::env;
-
-    use super::*;
-
-    fn retrieve_tests_ilteoood() -> PathBuf {
-        PathBuf::from(env::current_dir().unwrap())
-            .join("tests")
-            .join("node_modules")
-            .join("ilteoood")
-    }
-
-    #[test]
-    fn test_retrieve_js_files() {
-        let js_paths = retrieve_tests_ilteoood();
-
-        assert_eq!(
-            retrieve_js_files(&CliConfigurations {
-                node_modules_location: PathBuf::from(&js_paths),
-                ..Default::default()
-            }),
-            vec![
-                PathBuf::from(&js_paths).join("legit.esm.js"),
-                PathBuf::from(&js_paths).join("legit.js"),
-                PathBuf::from(&js_paths).join("unlegit.min.js"),
-            ]
-        );
     }
 }
 
