@@ -78,7 +78,7 @@ fn delete_lock_files(configurations: &CliConfigurations) {
 
 fn retrieve_garbage(
     configurations: &CliConfigurations,
-    module_graph: HashSet<PathBuf>,
+    module_graph: &HashSet<PathBuf>,
 ) -> Vec<PathBuf> {
     let node_modules_glob = configurations
         .project_root_location
@@ -100,7 +100,7 @@ fn retrieve_garbage(
 }
 
 /// Cleans up the node_modules directory
-pub fn clean(configurations: &CliConfigurations, module_graph: HashSet<PathBuf>) {
+pub fn clean(configurations: &CliConfigurations, module_graph: &HashSet<PathBuf>) {
     let garbage = retrieve_garbage(configurations, module_graph);
     for path in garbage {
         delete_path(path);
@@ -146,7 +146,7 @@ mod tests {
 
         clean(
             configurations,
-            HashSet::from([legit_esm_path.clone(), legit_path.clone()]),
+            &HashSet::from([legit_esm_path.clone(), legit_path.clone()]),
         );
 
         assert_eq!(node_modules_location.join("@types").exists(), false);

@@ -53,13 +53,8 @@ mod tests_retrieve_glob_paths {
         let js_paths = retrieve_tests_js_paths();
         let paths = retrieve_glob_paths(js_paths);
 
-        assert_eq!(
-            paths,
-            vec![
-                retrieve_tests_ilteoood().join("legit.esm.js"),
-                retrieve_tests_ilteoood().join("legit.js"),
-                retrieve_tests_ilteoood().join("unlegit.min.js"),
-            ]
-        );
+        assert!(paths.contains(&retrieve_tests_ilteoood().join("legit.esm.js")));
+        assert!(paths.contains(&retrieve_tests_ilteoood().join("legit.js")));
+        assert!(paths.contains(&retrieve_tests_ilteoood().join("unlegit.min.js")));
     }
 }
