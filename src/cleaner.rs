@@ -1,111 +1,22 @@
 //! Cleaner-related code
 
-use std::{fs::metadata, path::PathBuf};
+use std::{collections::HashSet, fs, path::PathBuf};
 
-use crate::configurations::CliConfigurations;
+use crate::{configurations::CliConfigurations, glob::retrieve_glob_paths};
 use remove_empty_subdirs::remove_empty_subdirs;
-
-use crate::glob::retrieve_glob_paths;
-
-/// List of glob patterns for garbage items to remove
-static GARBAGE_ITEMS: &[&str] = &[
-    // folders
-    "@types",
-    "bench",
-    "browser",
-    "docs",
-    "example",
-    "examples",
-    "test",
-    "tests",
-    "benchmark",
-    "integration",
-    ".bin",
-    // extensions
-    "*.md",
-    "*.markdown",
-    "*.map",
-    "*.ts",
-    // specific files
-    "license",
-    "contributing",
-    ".nycrc",
-    "makefile",
-    ".DS_Store",
-    ".markdownlint-cli2.yaml",
-    ".editorconfig",
-    ".nvmrc",
-    "bower.json",
-    ".airtap.yml",
-    "jenkinsfile",
-    "makefile",
-    ".snyk",
-    // generic files
-    ".*ignore",
-    "*eslint*",
-    "*stylelint*",
-    "*.min.*",
-    "browser.*js",
-    ".travis.*",
-    ".coveralls.*",
-    "tsconfig.*",
-    ".prettierrc*",
-    "*.bak",
-    "karma.conf.*",
-    ".git*",
-    ".tap*",
-    ".c8*",
-    "gulpfile.*",
-    "gruntfile.*",
-    ".npm*",
-    "yarn*",
-];
-
-/// Creates a closure that takes a list of garbage items and returns a vector of paths to remove
-fn manage_path<'a>(
-    garbage_paths: &'a mut Vec<String>,
-    configurations: &'a CliConfigurations,
-) -> impl FnMut(&[&str]) + 'a {
-    move |garbage_items: &[&str]| {
-        for garbage_item in garbage_items {
-            let garbage_path = configurations
-                .node_modules_location
-                .join("**")
-                .join(garbage_item);
-
-            match garbage_path.to_str() {
-                Some(garbage_path) => garbage_paths.push(garbage_path.to_string()),
-                None => println!("Failed to process: {}", garbage_item),
-            }
-        }
-    }
-}
-
-/// Generates a list of paths to remove based on the configuration
-fn generate_garbage_paths(configurations: &CliConfigurations) -> Vec<String> {
-    let mut garbage_paths: Vec<String> = vec![];
-
-    let mut manage_path_closure = manage_path(&mut garbage_paths, configurations);
-
-    manage_path_closure(GARBAGE_ITEMS);
-
-    drop(manage_path_closure);
-
-    garbage_paths
-}
 
 /// Deletes a path
 fn delete_path(path: PathBuf) {
     let path_location = path.display();
     println!("Removing: {}", path_location);
-    let metadata = metadata(&path);
+    let metadata = fs::metadata(&path);
 
     match metadata {
         Ok(metadata) => {
             let remove_result = if metadata.is_dir() {
-                std::fs::remove_dir_all(&path)
+                fs::remove_dir_all(&path)
             } else {
-                std::fs::remove_file(&path)
+                fs::remove_file(&path)
             };
 
             match remove_result {
@@ -117,16 +28,9 @@ fn delete_path(path: PathBuf) {
     }
 }
 
-/// Retrieves all garbage items
-pub fn retrieve_garbage(configurations: &CliConfigurations) -> Vec<PathBuf> {
-    let garbage_paths = generate_garbage_paths(configurations);
-
-    retrieve_glob_paths(garbage_paths)
-}
-
 /// Removes empty directories
 fn remove_empty_dirs(configurations: &CliConfigurations) {
-    match remove_empty_subdirs(&configurations.node_modules_location) {
+    match remove_empty_subdirs(&configurations.project_root_location) {
         Ok(_) => println!("Removed empty directories"),
         Err(_) => println!("Failed to remove empty directories"),
     }
@@ -172,9 +76,24 @@ fn delete_lock_files(configurations: &CliConfigurations) {
     );
 }
 
+fn retrieve_garbage(
+    configurations: &CliConfigurations,
+    module_graph: HashSet<PathBuf>,
+) -> Vec<PathBuf> {
+    let node_modules_glob = format!(
+        "{}/**/node_modules/**",
+        configurations.project_root_location.display()
+    );
+
+    retrieve_glob_paths(vec![node_modules_glob])
+        .into_iter()
+        .filter(|path| !module_graph.contains(path))
+        .collect()
+}
+
 /// Cleans up the node_modules directory
-pub fn clean(configurations: &CliConfigurations, garbage: Vec<PathBuf>) {
-    for path in garbage {
+pub fn clean(configurations: &CliConfigurations, module_graph: HashSet<PathBuf>) {
+    for path in retrieve_garbage(configurations, module_graph) {
         delete_path(path);
     }
     remove_empty_dirs(configurations);
@@ -189,25 +108,6 @@ mod tests {
     use assert_fs::{prelude::*, TempDir};
     use std::env;
 
-    fn base_garbage_structure() -> Vec<String> {
-        vec![
-            "/node_modules/@types".to_owned(),
-            "/node_modules/fastify/README.md".to_owned(),
-            "/node_modules/fastify/eslint.config.ts".to_owned(),
-            "/node_modules/busboy/.nvmrc".to_owned(),
-            "/node_modules/busboy/.eslintrc.json".to_owned(),
-            "/node_modules/ilteoood/unlegit.min.js".to_owned(),
-            "/node_modules/@types/tsconfig.json".to_owned(),
-        ]
-    }
-
-    #[test]
-    fn test_retrieve_garbage() {
-        let configurations = CliConfigurations::new();
-        let garbage = retrieve_garbage(&configurations);
-        assert!(garbage.is_empty());
-    }
-
     fn retrieve_tests_folders() -> (PathBuf, String, TempDir) {
         let current_dir = env::current_dir().unwrap();
         let tests_dir = current_dir.join("tests");
@@ -216,27 +116,6 @@ mod tests {
         temp.copy_from(tests_dir, &["**/*"]).unwrap();
 
         (temp.join("node_modules"), temp.display().to_string(), temp)
-    }
-
-    #[test]
-    fn test_retrieve_all_garbage() {
-        let (node_modules_location, current_dir, temp) = retrieve_tests_folders();
-
-        let garbage = retrieve_garbage(&CliConfigurations {
-            node_modules_location,
-            ..Default::default()
-        });
-
-        let current_dir = current_dir.as_str();
-
-        let garbage: Vec<String> = garbage
-            .iter()
-            .map(|path| path.display().to_string().replace(current_dir, ""))
-            .collect();
-
-        assert_eq!(garbage, base_garbage_structure());
-
-        temp.close().unwrap();
     }
 
     #[test]
@@ -249,26 +128,24 @@ mod tests {
     fn test_clean() {
         let (node_modules_location, _, temp) = retrieve_tests_folders();
         let configurations = &CliConfigurations {
-            node_modules_location: node_modules_location.to_path_buf(),
+            project_root_location: temp.to_path_buf(),
             ..Default::default()
         };
 
-        let garbage = retrieve_garbage(configurations);
+        let legit_esm_path = node_modules_location.join("ilteoood").join("legit.esm.js");
+        let legit_path = node_modules_location.join("ilteoood").join("legit.js");
 
-        clean(configurations, garbage);
+        clean(
+            configurations,
+            HashSet::from([legit_esm_path.clone(), legit_path.clone()]),
+        );
 
         assert_eq!(node_modules_location.join("@types").exists(), false);
         assert_eq!(node_modules_location.join("busboy").exists(), false);
         assert_eq!(node_modules_location.join("fastify").exists(), false);
         assert!(node_modules_location.join("ilteoood").exists());
-        assert!(node_modules_location
-            .join("ilteoood")
-            .join("legit.esm.js")
-            .exists());
-        assert!(node_modules_location
-            .join("ilteoood")
-            .join("legit.js")
-            .exists());
+        assert!(legit_esm_path.exists());
+        assert!(legit_path.exists());
         assert_eq!(
             node_modules_location
                 .join("ilteoood")

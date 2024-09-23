@@ -1,4 +1,4 @@
-// pub mod cleaner;
+pub mod cleaner;
 pub mod configurations;
 pub mod container_configurations;
 pub mod glob;
