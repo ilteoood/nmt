@@ -143,6 +143,16 @@ impl<'a> Visit<'a> for Visitor {
             }
         }
     }
+
+    fn visit_export_named_declaration(&mut self, it: &oxc_ast::ast::ExportNamedDeclaration<'a>) {
+        if let Some(source) = it.source.as_ref() {
+            self.insert_module_to_visit(source.to_string());
+        }
+    }
+
+    fn visit_export_all_declaration(&mut self, it: &oxc_ast::ast::ExportAllDeclaration<'a>) {
+        self.insert_module_to_visit(it.source.to_string());
+    }
 }
 
 #[cfg(test)]
@@ -172,6 +182,25 @@ mod specifier_tests {
         assert_eq!(
             visitor.modules_to_visit,
             HashSet::from(["path".to_string()])
+        );
+    }
+
+    #[test]
+    fn test_esm_export() {
+        let path = retrieve_tests_dir()
+            .join("node_modules")
+            .join("ilteoood")
+            .join("unlegit.min.js");
+
+        let mut visitor = Visitor::new(&CliConfigurations {
+            entry_point_location: path.clone(),
+            ..Default::default()
+        });
+        visitor.visit_path(path);
+
+        assert_eq!(
+            visitor.modules_to_visit,
+            HashSet::from(["fastify".to_string(), "stream".to_string()])
         );
     }
 
