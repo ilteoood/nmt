@@ -32,10 +32,6 @@ Options:
           Path to the home directory [env: HOME_LOCATION=] [default: ~]
   -d, --dry-run
           Whether to perform a dry run [env: DRY_RUN=]
-  -c, --cjs-only
-          Whether to remove all ESM files [env: CJS_ONLY=]
-  -e, --esm-only
-          Whether to remove all CJS files [env: ESM_ONLY=]
   -m, --minify
           Whether to minify JS files [env: MINIFY=]
   -h, --help
@@ -59,10 +55,6 @@ Options:
           Path to the home directory [env: HOME_LOCATION=] [default: ~]
   -d, --dry-run
           Whether to perform a dry run [env: DRY_RUN=]
-  -c, --cjs-only
-          Whether to remove all ESM files [env: CJS_ONLY=]
-  -e, --esm-only
-          Whether to remove all CJS files [env: ESM_ONLY=]
   -m, --minify
           Whether to minify JS files [env: MINIFY=]
   -s, --source-image <SOURCE_IMAGE>

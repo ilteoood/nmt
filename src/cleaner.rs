@@ -61,12 +61,6 @@ static GARBAGE_ITEMS: &[&str] = &[
     "yarn*",
 ];
 
-/// List of glob patterns for garbage items to remove for ESM only
-static GARBAGE_ESM_ITEMS: &[&str] = &["esm", "*.esm.js", "*.mjs"];
-
-/// List of glob patterns for garbage items to remove for CJS only
-static GARBAGE_CJS_ITEMS: &[&str] = &["cjs", "*.cjs.js", "*.cjs"];
-
 /// Creates a closure that takes a list of garbage items and returns a vector of paths to remove
 fn manage_path<'a>(
     garbage_paths: &'a mut Vec<String>,
@@ -94,14 +88,6 @@ fn generate_garbage_paths(configurations: &CliConfigurations) -> Vec<String> {
     let mut manage_path_closure = manage_path(&mut garbage_paths, configurations);
 
     manage_path_closure(GARBAGE_ITEMS);
-
-    if configurations.cjs_only {
-        manage_path_closure(GARBAGE_ESM_ITEMS);
-    }
-
-    if configurations.esm_only {
-        manage_path_closure(GARBAGE_CJS_ITEMS);
-    }
 
     drop(manage_path_closure);
 
@@ -249,31 +235,6 @@ mod tests {
             .collect();
 
         assert_eq!(garbage, base_garbage_structure());
-
-        temp.close().unwrap();
-    }
-
-    #[test]
-    fn test_retrieve_all_with_esm_garbage() {
-        let (node_modules_location, current_dir, temp) = retrieve_tests_folders();
-
-        let garbage = retrieve_garbage(&CliConfigurations {
-            node_modules_location,
-            cjs_only: true,
-            ..Default::default()
-        });
-
-        let current_dir = current_dir.as_str();
-
-        let garbage: Vec<String> = garbage
-            .iter()
-            .map(|path| path.display().to_string().replace(current_dir, ""))
-            .collect();
-
-        let mut expected_garbage = base_garbage_structure();
-        expected_garbage.push("/node_modules/ilteoood/legit.esm.js".to_owned());
-
-        assert_eq!(garbage, expected_garbage);
 
         temp.close().unwrap();
     }

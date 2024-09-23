@@ -10,8 +10,6 @@ use dirs;
 const PROJECT_ROOT_LOCATION: &str = "PROJECT_ROOT_LOCATION";
 const HOME_LOCATION: &str = "HOME_LOCATION";
 const DRY_RUN: &str = "DRY_RUN";
-const CJS_ONLY: &str = "CJS_ONLY";
-const ESM_ONLY: &str = "ESM_ONLY";
 const SOURCE_IMAGE: &str = "SOURCE_IMAGE";
 const DESTINATION_IMAGE: &str = "DESTINATION_IMAGE";
 const MINIFY: &str = "MINIFY";
@@ -34,12 +32,6 @@ pub struct CliConfigurations {
     /// Whether to perform a dry run
     #[arg(short, long, default_value_t = false, env = DRY_RUN)]
     pub dry_run: bool,
-    /// Whether to remove all ESM files
-    #[arg(short, long, default_value_t = false, env = CJS_ONLY)]
-    pub cjs_only: bool,
-    /// Whether to remove all CJS files
-    #[arg(short, long, default_value_t = false, env = ESM_ONLY)]
-    pub esm_only: bool,
     /// Whether to minify JS files
     #[arg(short, long, default_value_t = false, env = MINIFY)]
     pub minify: bool,
@@ -87,22 +79,17 @@ impl CliConfigurations {
             self.project_root_location.display()
         );
 
-        [
-            (DRY_RUN, self.dry_run),
-            (CJS_ONLY, self.cjs_only),
-            (ESM_ONLY, self.esm_only),
-            (MINIFY, self.minify),
-        ]
-        .iter()
-        .filter(|(_, value)| *value)
-        .for_each(|(env_name, value)| {
-            env += format!(
-                "
+        [(DRY_RUN, self.dry_run), (MINIFY, self.minify)]
+            .iter()
+            .filter(|(_, value)| *value)
+            .for_each(|(env_name, value)| {
+                env += format!(
+                    "
 ENV {}={}",
-                env_name, value
-            )
-            .as_str();
-        });
+                    env_name, value
+                )
+                .as_str();
+            });
 
         env
     }
@@ -140,7 +127,6 @@ mod tests {
     fn clean_cli_env() {
         env::remove_var(PROJECT_ROOT_LOCATION);
         env::remove_var(DRY_RUN);
-        env::remove_var(CJS_ONLY);
     }
 
     fn clean_docker_env() {
@@ -161,7 +147,6 @@ mod tests {
             PathBuf::from("./node_modules")
         );
         assert!(!configurations.dry_run);
-        assert!(!configurations.cjs_only);
     }
 
     #[test]
@@ -169,7 +154,6 @@ mod tests {
         clean_cli_env();
         env::set_var(PROJECT_ROOT_LOCATION, "PROJECT_ROOT_LOCATION");
         env::set_var(DRY_RUN, "true");
-        env::set_var(CJS_ONLY, "true");
         let configurations = CliConfigurations::new();
         assert_eq!(
             configurations.project_root_location,
@@ -180,7 +164,6 @@ mod tests {
             PathBuf::from("PROJECT_ROOT_LOCATION/node_modules")
         );
         assert!(configurations.dry_run);
-        assert!(configurations.cjs_only);
     }
 
     #[test]
@@ -200,12 +183,11 @@ mod tests {
         clean_docker_env();
         env::set_var(PROJECT_ROOT_LOCATION, "PROJECT_ROOT_LOCATION");
         env::set_var(DRY_RUN, "true");
-        env::set_var(CJS_ONLY, "true");
         let configurations = CliConfigurations::parse();
 
         assert_eq!(
             configurations.to_dockerfile_env(),
-            "ENV PROJECT_ROOT_LOCATION=PROJECT_ROOT_LOCATION\nENV DRY_RUN=true\nENV CJS_ONLY=true"
+            "ENV PROJECT_ROOT_LOCATION=PROJECT_ROOT_LOCATION\nENV DRY_RUN=true"
         );
     }
 
