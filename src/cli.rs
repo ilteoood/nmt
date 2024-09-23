@@ -1,8 +1,10 @@
 // use nmt::{cleaner, configurations::CliConfigurations, minifier};
-use nmt::configurations::CliConfigurations;
+use nmt::{configurations::CliConfigurations, module_graph::Visitor};
 
 fn main() {
     let configurations = &CliConfigurations::new();
+
+    let module_graph = Visitor::new(configurations).run();
 
     // let garbage_paths = cleaner::retrieve_garbage(configurations);
 
