@@ -77,13 +77,12 @@ impl<'a> Visitor {
         let paths_to_add: Vec<PathBuf> = self
             .modules_to_visit
             .iter()
-            .map(
+            .filter_map(
                 |specifier| match resolver.resolve(&self.current_path, specifier) {
                     Err(_) => None,
                     Ok(resolution) => Some(resolution.full_path()),
                 },
             )
-            .flatten()
             .collect();
 
         for path in paths_to_add {
