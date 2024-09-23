@@ -80,20 +80,29 @@ fn retrieve_garbage(
     configurations: &CliConfigurations,
     module_graph: HashSet<PathBuf>,
 ) -> Vec<PathBuf> {
-    let node_modules_glob = format!(
-        "{}/**/node_modules/**",
-        configurations.project_root_location.display()
-    );
+    let node_modules_glob = configurations
+        .project_root_location
+        .join("**")
+        .join("node_modules")
+        .join("**");
 
-    retrieve_glob_paths(vec![node_modules_glob])
-        .into_iter()
-        .filter(|path| !module_graph.contains(path))
-        .collect()
+    let package_json_filter = Some("package.json".as_ref());
+
+    retrieve_glob_paths(vec![
+        node_modules_glob.join("*").display().to_string(),
+        node_modules_glob.join(".*").display().to_string(),
+    ])
+    .into_iter()
+    .filter(|path| path.is_file())
+    .filter(|path| !module_graph.contains(path))
+    .filter(|path| path.file_name() != package_json_filter)
+    .collect()
 }
 
 /// Cleans up the node_modules directory
 pub fn clean(configurations: &CliConfigurations, module_graph: HashSet<PathBuf>) {
-    for path in retrieve_garbage(configurations, module_graph) {
+    let garbage = retrieve_garbage(configurations, module_graph);
+    for path in garbage {
         delete_path(path);
     }
     remove_empty_dirs(configurations);
