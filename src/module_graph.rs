@@ -55,7 +55,7 @@ impl<'a> Visitor {
     }
 
     fn insert_module_to_visit(&mut self, module: String) {
-        if module.ends_with(".json") {
+        if module.ends_with(".json") || module.ends_with(".node") {
             self.add_path(self.current_path.parent().unwrap().join(module));
         } else if module.starts_with("..") || module.starts_with(".") {
             let path = self.retrieve_file_path(module);
