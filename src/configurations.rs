@@ -5,8 +5,6 @@ use std::path::{Path, PathBuf};
 use clap::{command, Parser};
 use dirs;
 
-/// Configuration for the CLI
-
 const PROJECT_ROOT_LOCATION: &str = "PROJECT_ROOT_LOCATION";
 const ENTRY_POINT_LOCATION: &str = "ENTRY_POINT_LOCATION";
 const HOME_LOCATION: &str = "HOME_LOCATION";
@@ -19,6 +17,7 @@ const DEFAULT_HOME_DIR: &str = "~";
 const DEFAULT_ROOT_LOCATION: &str = ".";
 const DEFAULT_ENTRY_POINT_LOCATION: &str = "dist/index.js";
 
+/// Configuration for the CLI
 #[derive(Debug, Parser, Default)]
 #[command(version, about, long_about)]
 pub struct CliConfigurations {

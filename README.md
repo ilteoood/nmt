@@ -27,15 +27,36 @@ Usage: cli [OPTIONS]
 
 Options:
   -p, --project-root-location <PROJECT_ROOT_LOCATION>
-          Path to the project root [env: PROJECT_ROOT_LOCATION=] [default: .]
+          Path to the project root
+          
+          [env: PROJECT_ROOT_LOCATION=]
+          [default: .]
+
+  -e, --entry-point-location <ENTRY_POINT_LOCATION>
+          Path to the node_modules directory
+          
+          [env: ENTRY_POINT_LOCATION=]
+          [default: dist/index.js]
+
   -H, --home-location <HOME_LOCATION>
-          Path to the home directory [env: HOME_LOCATION=] [default: ~]
+          Path to the home directory
+          
+          [env: HOME_LOCATION=]
+          [default: ~]
+
   -d, --dry-run
-          Whether to perform a dry run [env: DRY_RUN=]
+          Whether to perform a dry run
+          
+          [env: DRY_RUN=]
+
   -m, --minify
-          Whether to minify JS files [env: MINIFY=]
+          Whether to minify JS files
+          
+          [env: MINIFY=]
+
   -h, --help
-          Print help
+          Print help (see a summary with '-h')
+
   -V, --version
           Print version
 ```
@@ -50,19 +71,48 @@ Usage: docker [OPTIONS]
 
 Options:
   -p, --project-root-location <PROJECT_ROOT_LOCATION>
-          Path to the project root [env: PROJECT_ROOT_LOCATION=] [default: .]
+          Path to the project root
+          
+          [env: PROJECT_ROOT_LOCATION=]
+          [default: .]
+
+  -e, --entry-point-location <ENTRY_POINT_LOCATION>
+          Path to the node_modules directory
+          
+          [env: ENTRY_POINT_LOCATION=]
+          [default: dist/index.js]
+
   -H, --home-location <HOME_LOCATION>
-          Path to the home directory [env: HOME_LOCATION=] [default: ~]
+          Path to the home directory
+          
+          [env: HOME_LOCATION=]
+          [default: ~]
+
   -d, --dry-run
-          Whether to perform a dry run [env: DRY_RUN=]
+          Whether to perform a dry run
+          
+          [env: DRY_RUN=]
+
   -m, --minify
-          Whether to minify JS files [env: MINIFY=]
+          Whether to minify JS files
+          
+          [env: MINIFY=]
+
   -s, --source-image <SOURCE_IMAGE>
-          The source image [env: SOURCE_IMAGE=] [default: hello-world]
+          The source image
+          
+          [env: SOURCE_IMAGE=]
+          [default: hello-world]
+
   -D, --destination-image <DESTINATION_IMAGE>
-          The destination image [env: DESTINATION_IMAGE=] [default: ]
+          The destination image
+          
+          [env: DESTINATION_IMAGE=]
+          [default: ]
+
   -h, --help
-          Print help (see more with '--help')
+          Print help (see a summary with '-h')
+
   -V, --version
           Print version
 ```
