@@ -29,7 +29,7 @@ impl<'a> Visitor {
         }
     }
 
-    fn retrieve_file_path(&mut self, module: String) -> PathBuf {
+    fn retrieve_file_path(&mut self, module: String) -> Option<PathBuf> {
         let parent_path = self.current_path.parent().unwrap();
 
         [
@@ -39,7 +39,6 @@ impl<'a> Visitor {
         ]
         .into_iter()
         .find(|path| path.is_file())
-        .unwrap()
     }
 
     fn add_path_to_visit(&mut self, path: PathBuf) {
@@ -63,8 +62,9 @@ impl<'a> Visitor {
         if module.ends_with(".json") || module.ends_with(".node") {
             self.add_path(self.current_path.parent().unwrap().join(module));
         } else if module.starts_with("..") || module.starts_with(".") {
-            let path = self.retrieve_file_path(module);
-            self.add_path_to_visit(path);
+            if let Some(path) = self.retrieve_file_path(module) {
+                self.add_path_to_visit(path);
+            }
         } else if !module.starts_with("node:") {
             self.modules_to_visit.insert(module);
         }
