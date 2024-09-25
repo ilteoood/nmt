@@ -88,7 +88,7 @@ mod tests_compile {
 
         assert_eq!(
             compiler(&js_path).unwrap(),
-            "import t from\"path\";export default function(e){return\".md\"===t.extname(e)}"
+            "import t from\"path\";import(\"stream\");export default function(r){return\".md\"===t.extname(r)}"
         );
     }
 
