@@ -24,7 +24,7 @@ impl<'a> Visitor {
         Self {
             modules_to_visit: HashSet::new(),
             files_to_visit: VecDeque::from([configurations.entry_point_location.clone()]),
-            paths_found: HashSet::new(),
+            paths_found: HashSet::from([configurations.entry_point_location.clone()]),
             current_path: PathBuf::new(),
         }
     }
@@ -262,7 +262,7 @@ mod resolve_tests {
         let path = tests_dir.join("index.js");
 
         let mut visitor = Visitor::new(&CliConfigurations {
-            entry_point_location: path,
+            entry_point_location: path.clone(),
             ..Default::default()
         });
 
@@ -270,10 +270,13 @@ mod resolve_tests {
 
         assert_eq!(
             result,
-            HashSet::from([tests_dir
-                .join("node_modules")
-                .join("ilteoood")
-                .join("legit.js")])
+            HashSet::from([
+                path,
+                tests_dir
+                    .join("node_modules")
+                    .join("ilteoood")
+                    .join("legit.js")
+            ])
         );
     }
 }
