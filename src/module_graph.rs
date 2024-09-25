@@ -148,13 +148,11 @@ impl<'a> Visit<'a> for Visitor {
                     if let Expression::MetaProperty(meta_property) =
                         &static_member_expression.object
                     {
-                        match (
-                            meta_property.meta.name.as_str(),
-                            meta_property.property.name.as_str(),
-                            it.callee_name(),
-                        ) {
-                            ("import", "meta", Some("resolve")) => self.insert_first_argument(it),
-                            _ => {}
+                        if meta_property.meta.name.as_str() == "import"
+                            && meta_property.property.name.as_str() == "meta"
+                            && it.callee_name() == Some("resolve")
+                        {
+                            self.insert_first_argument(it);
                         }
                     }
                 }
