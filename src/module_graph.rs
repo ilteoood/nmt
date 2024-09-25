@@ -50,8 +50,13 @@ impl<'a> Visitor {
     }
 
     fn add_path(&mut self, path: PathBuf) -> bool {
-        let path = path.canonicalize().unwrap();
-        self.paths_found.insert(path.clone())
+        match path.canonicalize() {
+            Ok(path) => self.paths_found.insert(path),
+            Err(err) => {
+                println!("Error while processing {}: {}", path.display(), err);
+                false
+            }
+        }
     }
 
     fn insert_module_to_visit(&mut self, module: String) {
