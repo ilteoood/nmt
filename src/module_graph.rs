@@ -135,10 +135,23 @@ impl<'a> Visit<'a> for Visitor {
         match it.common_js_require() {
             Some(lit) => self.insert_module_to_visit(lit.value.to_string()),
             None => {
-                if it.callee.is_specific_member_access("require", "resolve")
-                    && it.callee_name() == Some("resolve")
-                {
+                if it.callee.is_specific_member_access("require", "resolve") {
                     self.insert_first_argument(it);
+                } else if let Expression::StaticMemberExpression(static_member_expression) =
+                    &it.callee
+                {
+                    if let Expression::MetaProperty(meta_property) =
+                        &static_member_expression.object
+                    {
+                        match (
+                            meta_property.meta.name.as_str(),
+                            meta_property.property.name.as_str(),
+                            it.callee_name(),
+                        ) {
+                            ("import", "meta", Some("resolve")) => self.insert_first_argument(it),
+                            _ => {}
+                        }
+                    }
                 }
             }
         }
@@ -187,7 +200,7 @@ mod specifier_tests {
 
         assert_eq!(
             visitor.modules_to_visit,
-            HashSet::from(["path".to_string(), "stream".to_string()])
+            HashSet::from(["path".to_string(), "stream".to_string(), "fs".to_string()])
         );
     }
 
