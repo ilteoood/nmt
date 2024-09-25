@@ -19,7 +19,7 @@ pub fn retrieve_glob_paths(glob_paths: Vec<String>) -> Vec<PathBuf> {
         {
             match entry {
                 Ok(garbage_path) => {
-                    absolute_paths.insert(garbage_path);
+                    absolute_paths.insert(garbage_path.canonicalize().unwrap());
                 }
                 Err(glob_error) => {
                     println!("Failed to process glob pattern {}: {}", path, glob_error);

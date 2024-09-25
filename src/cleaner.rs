@@ -141,8 +141,16 @@ mod tests {
             ..Default::default()
         };
 
-        let legit_esm_path = node_modules_location.join("ilteoood").join("legit.esm.js");
-        let legit_path = node_modules_location.join("ilteoood").join("legit.js");
+        let legit_esm_path = node_modules_location
+            .join("ilteoood")
+            .join("legit.esm.js")
+            .canonicalize()
+            .unwrap();
+        let legit_path = node_modules_location
+            .join("ilteoood")
+            .join("legit.js")
+            .canonicalize()
+            .unwrap();
 
         clean(
             configurations,
