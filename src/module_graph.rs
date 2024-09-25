@@ -153,6 +153,12 @@ impl<'a> Visit<'a> for Visitor {
     fn visit_export_all_declaration(&mut self, it: &oxc_ast::ast::ExportAllDeclaration<'a>) {
         self.insert_module_to_visit(it.source.to_string());
     }
+
+    fn visit_import_expression(&mut self, it: &oxc_ast::ast::ImportExpression<'a>) {
+        if let oxc_ast::ast::Expression::StringLiteral(source_lit) = &it.source {
+            self.insert_module_to_visit(source_lit.value.to_string());
+        }
+    }
 }
 
 #[cfg(test)]
@@ -181,7 +187,7 @@ mod specifier_tests {
 
         assert_eq!(
             visitor.modules_to_visit,
-            HashSet::from(["path".to_string()])
+            HashSet::from(["path".to_string(), "stream".to_string()])
         );
     }
 
