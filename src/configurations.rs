@@ -76,25 +76,36 @@ impl CliConfigurations {
 
     /// Converts the configuration to a Dockerfile
     pub fn to_dockerfile_env(&self) -> String {
-        let mut env = format!(
-            "ENV {}={}",
-            PROJECT_ROOT_LOCATION,
-            self.project_root_location.display()
-        );
+        let mut env = "".to_owned();
+
+        [
+            (PROJECT_ROOT_LOCATION, self.project_root_location.display()),
+            (ENTRY_POINT_LOCATION, self.entry_point_location.display()),
+            (HOME_LOCATION, self.home_location.display()),
+        ]
+        .iter()
+        .for_each(|(env_name, value)| {
+            env += format!(
+                "ENV {}={}
+",
+                env_name, value
+            )
+            .as_str();
+        });
 
         [(DRY_RUN, self.dry_run), (MINIFY, self.minify)]
             .iter()
             .filter(|(_, value)| *value)
             .for_each(|(env_name, value)| {
                 env += format!(
-                    "
-ENV {}={}",
+                    "ENV {}={}
+",
                     env_name, value
                 )
                 .as_str();
             });
 
-        env
+        env.trim_end().to_owned()
     }
 }
 
@@ -177,7 +188,7 @@ mod tests {
 
         assert_eq!(
             configurations.to_dockerfile_env(),
-            "ENV PROJECT_ROOT_LOCATION=."
+            "ENV PROJECT_ROOT_LOCATION=.\nENV ENTRY_POINT_LOCATION=dist/index.js\nENV HOME_LOCATION=~"
         );
     }
 
@@ -190,7 +201,7 @@ mod tests {
 
         assert_eq!(
             configurations.to_dockerfile_env(),
-            "ENV PROJECT_ROOT_LOCATION=PROJECT_ROOT_LOCATION\nENV DRY_RUN=true"
+            "ENV PROJECT_ROOT_LOCATION=PROJECT_ROOT_LOCATION\nENV ENTRY_POINT_LOCATION=dist/index.js\nENV HOME_LOCATION=~\nENV DRY_RUN=true"
         );
     }
 
