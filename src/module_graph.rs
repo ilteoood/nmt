@@ -252,7 +252,12 @@ mod specifier_tests {
 
         assert_eq!(
             visitor.modules_to_visit,
-            HashSet::from(["path".to_string(), "stream".to_string(), "depd".to_string()])
+            HashSet::from([
+                "path".to_owned(),
+                "stream".to_owned(),
+                "module".to_owned(),
+                "depd".to_owned()
+            ])
         );
     }
 }
