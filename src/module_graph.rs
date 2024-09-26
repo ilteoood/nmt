@@ -160,7 +160,7 @@ impl<'a> Visit<'a> for Visitor {
                         self.visit_arguments(&it.arguments)
                     }
                 }
-                _ => self.visit_arguments(&it.arguments),
+                _ => self.visit_expression(it.callee.get_inner_expression()),
             },
         }
     }

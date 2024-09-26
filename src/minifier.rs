@@ -100,7 +100,7 @@ mod tests_compile {
 
         assert_eq!(
             compiler(&js_path).unwrap(),
-            "const e=require(\"path\");require.resolve(\"stream\"),require(\"depd\")(\"body-parser\"),e.join(require(\"module\")),module.exports=function(r){return\".md\"===e.extname(r)};"
+            "!function(){let e=require(\"path\");require.resolve(\"stream\"),require(\"depd\")(\"body-parser\"),e.join(require(\"module\"))}(),module.exports=function(e){return\".md\"===path.extname(e)};"
         );
     }
 }
