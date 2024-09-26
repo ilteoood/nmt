@@ -143,7 +143,6 @@ impl<'a> Visit<'a> for Visitor {
         match it.common_js_require() {
             Some(lit) => self.insert_module_to_visit(lit.value.to_string()),
             None => match &it.callee {
-                Expression::CallExpression(callee) => self.visit_call_expression(callee),
                 Expression::StaticMemberExpression(static_member_expression) => {
                     if it.callee.is_specific_member_access("require", "resolve") {
                         self.insert_first_argument(it);
