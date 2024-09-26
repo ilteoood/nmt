@@ -5,7 +5,10 @@ use std::{
 };
 
 use oxc_allocator::Allocator;
-use oxc_ast::{ast::Expression, Visit};
+use oxc_ast::{
+    ast::{Argument, Expression},
+    Visit,
+};
 use oxc_parser::{ParseOptions, Parser};
 use oxc_resolver::{ResolveOptions, Resolver};
 use oxc_span::SourceType;
@@ -153,10 +156,18 @@ impl<'a> Visit<'a> for Visitor {
                         {
                             self.insert_first_argument(it);
                         }
+                    } else {
+                        self.visit_arguments(&it.arguments)
                     }
                 }
-                _ => {}
+                _ => self.visit_arguments(&it.arguments),
             },
+        }
+    }
+
+    fn visit_argument(&mut self, it: &oxc_ast::ast::Argument<'a>) {
+        if let Argument::CallExpression(expression) = it {
+            self.visit_call_expression(expression);
         }
     }
 
