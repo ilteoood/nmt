@@ -24,7 +24,7 @@ pub struct CliConfigurations {
     /// Path to the project root
     #[arg(short, long, default_value = DEFAULT_ROOT_LOCATION, env = PROJECT_ROOT_LOCATION)]
     pub project_root_location: PathBuf,
-    /// Path to the node_modules directory
+    /// Path to the application's entry point
     #[arg(short, long, default_value = DEFAULT_ENTRY_POINT_LOCATION, env = ENTRY_POINT_LOCATION)]
     pub entry_point_location: PathBuf,
     /// Path to the home directory
