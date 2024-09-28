@@ -86,6 +86,8 @@ fn retrieve_garbage(
         .join("node_modules")
         .join("**");
 
+    let package_json_filter = Some("package.json".as_ref());
+
     retrieve_glob_paths(vec![
         node_modules_glob.join("*").display().to_string(),
         node_modules_glob.join(".*").display().to_string(),
@@ -93,6 +95,7 @@ fn retrieve_garbage(
     .into_iter()
     .filter(|path| path.is_file())
     .filter(|path| !module_graph.contains(path))
+    .filter(|path| path.file_name() != package_json_filter)
     .collect()
 }
 
