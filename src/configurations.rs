@@ -9,7 +9,7 @@ use crate::glob::retrieve_glob_paths;
 
 const PROJECT_ROOT_LOCATION: &str = "PROJECT_ROOT_LOCATION";
 const ENTRY_POINT_LOCATION: &str = "ENTRY_POINT_LOCATION";
-const IGNORE: &str = "IGNORE";
+const KEEP: &str = "KEEP";
 const HOME_LOCATION: &str = "HOME_LOCATION";
 const DRY_RUN: &str = "DRY_RUN";
 const SOURCE_IMAGE: &str = "SOURCE_IMAGE";
@@ -40,7 +40,7 @@ pub struct CliConfigurations {
     #[arg(short, long, default_value_t = false, env = MINIFY)]
     pub minify: bool,
     /// A list of files to ignore
-    #[arg(short, long, env = IGNORE)]
+    #[arg(short, long, env = KEEP)]
     pub keep: Option<Vec<String>>,
 }
 
@@ -133,6 +133,10 @@ impl CliConfigurations {
                 .as_str();
             });
 
+        if let Some(keep) = &self.keep {
+            env += format!("ENV {}={}", KEEP, keep.join(",")).as_str();
+        }
+
         env.trim_end().to_owned()
     }
 }
@@ -154,7 +158,6 @@ impl DockerConfigurations {
         let mut docker_configurations = Self::parse();
 
         docker_configurations.default_destination_image();
-        docker_configurations.cli.post_parse();
 
         docker_configurations
     }
@@ -248,7 +251,6 @@ mod tests {
         let source_image = source_image.as_str();
 
         env::set_var(SOURCE_IMAGE, source_image);
-        env::set_var(ENTRY_POINT_LOCATION, "tests/index.js");
 
         let configurations = DockerConfigurations::new();
 
@@ -263,13 +265,11 @@ mod tests {
     fn test_docker_default_configurations() {
         clean_docker_env();
 
-        env::set_var(ENTRY_POINT_LOCATION, "tests/index.js");
-
         let configurations = DockerConfigurations::new();
         assert_eq!(configurations.cli.project_root_location, PathBuf::from("."));
         assert_eq!(
             configurations.cli.entry_point_location,
-            PathBuf::from("./tests/index.js").canonicalize().unwrap()
+            PathBuf::from("dist/index.js")
         );
         assert_eq!(configurations.source_image, DEFAULT_IMAGE_NAME);
         assert_eq!(
