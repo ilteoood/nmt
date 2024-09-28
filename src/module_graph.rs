@@ -89,22 +89,22 @@ impl<'a> Visitor {
     }
 
     fn resolve_modules_to_visit(&mut self) {
-        let paths_to_add: Vec<PathBuf> = self
-            .modules_to_visit
-            .iter()
-            .filter_map(
-                |specifier| match self.resolver.resolve(&self.current_path, specifier) {
-                    Err(_) => None,
-                    Ok(resolution) => Some(resolution.full_path()),
-                },
-            )
-            .collect();
+        let specifiers: Vec<String> = self.modules_to_visit.drain().collect();
 
-        for path in paths_to_add {
-            self.add_path_to_visit(path);
+        for specifier in specifiers {
+            match self
+                .resolver
+                .resolve(&self.current_path, specifier.as_str())
+            {
+                Err(_) => {}
+                Ok(resolution) => {
+                    if let Some(package_json) = resolution.package_json() {
+                        self.add_path(package_json.realpath.clone());
+                    }
+                    self.add_path_to_visit(resolution.full_path());
+                }
+            }
         }
-
-        self.modules_to_visit.clear();
     }
 
     pub fn run(&mut self) -> HashSet<PathBuf> {

@@ -19,7 +19,12 @@
                     "kind": "bin"
                 }
             },
-            "args": [],
+            "args": [
+                "--project-root-location",
+                "/Users/ilteoood/Documents/git/personal/node-red",
+                "--entry-point-location",
+                "/Users/ilteoood/Documents/git/personal/node-red/packages/node_modules/node-red/red.js"
+            ],
             "cwd": "${workspaceFolder}"
         },
         {
