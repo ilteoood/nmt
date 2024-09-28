@@ -173,6 +173,7 @@ mod tests {
         env::remove_var(PROJECT_ROOT_LOCATION);
         env::remove_var(DRY_RUN);
         env::remove_var(ENTRY_POINT_LOCATION);
+        env::remove_var(KEEP);
     }
 
     fn clean_docker_env() {
@@ -210,14 +211,27 @@ mod tests {
 
     #[test]
     fn test_cli_to_docker_env() {
-        clean_docker_env();
+        clean_cli_env();
         env::set_var(PROJECT_ROOT_LOCATION, "PROJECT_ROOT_LOCATION");
         env::set_var(DRY_RUN, "true");
+        env::set_var(KEEP, "path/1,path/2");
         let configurations = CliConfigurations::parse();
 
         assert_eq!(
             configurations.to_dockerfile_env(),
-            "ENV PROJECT_ROOT_LOCATION=PROJECT_ROOT_LOCATION\nENV ENTRY_POINT_LOCATION=dist/index.js\nENV HOME_LOCATION=~\nENV DRY_RUN=true"
+            "ENV PROJECT_ROOT_LOCATION=PROJECT_ROOT_LOCATION\nENV ENTRY_POINT_LOCATION=dist/index.js\nENV HOME_LOCATION=~\nENV DRY_RUN=true\nENV KEEP=path/1,path/2"
+        );
+    }
+
+    #[test]
+    fn test_cli_keep() {
+        clean_cli_env();
+        env::set_var(KEEP, "path/1,path/2");
+        let configurations = CliConfigurations::parse();
+
+        assert_eq!(
+            configurations.keep,
+            Some(vec!["path/1".to_owned(), "path/2".to_owned()])
         );
     }
 
