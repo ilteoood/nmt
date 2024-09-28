@@ -17,6 +17,7 @@ pub struct Visitor {
     files_to_visit: VecDeque<PathBuf>,
     paths_found: HashSet<PathBuf>,
     current_path: PathBuf,
+    resolver: Resolver,
 }
 
 impl<'a> Visitor {
@@ -26,6 +27,7 @@ impl<'a> Visitor {
             files_to_visit: VecDeque::from([configurations.entry_point_location.clone()]),
             paths_found: HashSet::from([configurations.entry_point_location.clone()]),
             current_path: PathBuf::new(),
+            resolver: Resolver::new(ResolveOptions::default()),
         }
     }
 
@@ -77,13 +79,11 @@ impl<'a> Visitor {
     }
 
     fn resolve_modules_to_visit(&mut self) {
-        let resolver = Resolver::new(ResolveOptions::default());
-
         let paths_to_add: Vec<PathBuf> = self
             .modules_to_visit
             .iter()
             .filter_map(
-                |specifier| match resolver.resolve(&self.current_path, specifier) {
+                |specifier| match self.resolver.resolve(&self.current_path, specifier) {
                     Err(_) => None,
                     Ok(resolution) => Some(resolution.full_path()),
                 },
