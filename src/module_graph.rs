@@ -22,10 +22,16 @@ pub struct Visitor {
 
 impl<'a> Visitor {
     pub fn new(configurations: &CliConfigurations) -> Self {
+        let initial_files = [
+            configurations.keep_files(),
+            vec![configurations.entry_point_location.clone()],
+        ]
+        .concat();
+
         Self {
             modules_to_visit: HashSet::new(),
-            files_to_visit: VecDeque::from([configurations.entry_point_location.clone()]),
-            paths_found: HashSet::from([configurations.entry_point_location.clone()]),
+            files_to_visit: VecDeque::from(initial_files.clone()),
+            paths_found: initial_files.into_iter().collect::<HashSet<PathBuf>>(),
             current_path: PathBuf::new(),
             resolver: Resolver::new(ResolveOptions {
                 exports_fields: vec![],
@@ -120,16 +126,18 @@ impl<'a> Visitor {
             }
             Ok(source_text) => {
                 let allocator = Allocator::default();
-                let source_type = SourceType::from_path(&self.current_path).unwrap();
+                let source_type = SourceType::from_path(&self.current_path);
 
-                let ret = Parser::new(&allocator, &source_text, source_type)
-                    .with_options(ParseOptions {
-                        parse_regular_expression: true,
-                        ..ParseOptions::default()
-                    })
-                    .parse();
+                if let Ok(source_type) = source_type {
+                    let ret = Parser::new(&allocator, &source_text, source_type)
+                        .with_options(ParseOptions {
+                            parse_regular_expression: true,
+                            ..ParseOptions::default()
+                        })
+                        .parse();
 
-                self.visit_program(&ret.program);
+                    self.visit_program(&ret.program);
+                }
             }
         }
     }

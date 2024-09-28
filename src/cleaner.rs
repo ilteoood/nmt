@@ -129,7 +129,10 @@ mod tests {
 
     #[test]
     fn test_remove_empty_dirs() {
-        let configurations = CliConfigurations::new();
+        let configurations = &CliConfigurations {
+            entry_point_location: "tests/index.js".into(),
+            ..Default::default()
+        };
         remove_empty_dirs(&configurations);
     }
 

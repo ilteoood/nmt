@@ -5,8 +5,11 @@ use std::path::{Path, PathBuf};
 use clap::{command, Parser};
 use dirs;
 
+use crate::glob::retrieve_glob_paths;
+
 const PROJECT_ROOT_LOCATION: &str = "PROJECT_ROOT_LOCATION";
 const ENTRY_POINT_LOCATION: &str = "ENTRY_POINT_LOCATION";
+const IGNORE: &str = "IGNORE";
 const HOME_LOCATION: &str = "HOME_LOCATION";
 const DRY_RUN: &str = "DRY_RUN";
 const SOURCE_IMAGE: &str = "SOURCE_IMAGE";
@@ -36,6 +39,9 @@ pub struct CliConfigurations {
     /// Whether to minify JS files
     #[arg(short, long, default_value_t = false, env = MINIFY)]
     pub minify: bool,
+    /// A list of files to ignore
+    #[arg(short, long, env = IGNORE)]
+    pub keep: Option<Vec<String>>,
 }
 
 /// Configuration for the Docker image
@@ -69,9 +75,31 @@ impl CliConfigurations {
                 dirs::home_dir().unwrap_or(Path::new(DEFAULT_ROOT_LOCATION).to_path_buf())
         }
 
-        if self.entry_point_location.display().to_string() == DEFAULT_ENTRY_POINT_LOCATION {
-            self.entry_point_location = self.project_root_location.join(&self.entry_point_location);
-        }
+        self.entry_point_location = self
+            .project_root_location
+            .join(&self.entry_point_location)
+            .canonicalize()
+            .expect("Failed to canonicalize entry point location");
+    }
+
+    pub fn keep_files(&self) -> Vec<PathBuf> {
+        let globs: Vec<String> = self
+            .keep
+            .as_ref()
+            .unwrap_or(&Vec::new())
+            .iter()
+            .map(|keep_pattern| {
+                self.project_root_location
+                    .join(keep_pattern)
+                    .display()
+                    .to_string()
+            })
+            .collect();
+
+        retrieve_glob_paths(globs)
+            .into_iter()
+            .filter(|path| path.is_file())
+            .collect()
     }
 
     /// Converts the configuration to a Dockerfile
@@ -141,6 +169,7 @@ mod tests {
     fn clean_cli_env() {
         env::remove_var(PROJECT_ROOT_LOCATION);
         env::remove_var(DRY_RUN);
+        env::remove_var(ENTRY_POINT_LOCATION);
     }
 
     fn clean_docker_env() {
@@ -151,31 +180,15 @@ mod tests {
     }
 
     #[test]
-    fn test_cli_default_configurations() {
+    fn test_cli_configurations() {
         clean_cli_env();
-
+        env::set_var(DRY_RUN, "true");
+        env::set_var(ENTRY_POINT_LOCATION, "tests/index.js");
         let configurations = CliConfigurations::new();
         assert_eq!(configurations.project_root_location, PathBuf::from("."));
         assert_eq!(
             configurations.entry_point_location,
-            PathBuf::from("./dist/index.js")
-        );
-        assert!(!configurations.dry_run);
-    }
-
-    #[test]
-    fn test_cli_configurations() {
-        clean_cli_env();
-        env::set_var(PROJECT_ROOT_LOCATION, "PROJECT_ROOT_LOCATION");
-        env::set_var(DRY_RUN, "true");
-        let configurations = CliConfigurations::new();
-        assert_eq!(
-            configurations.project_root_location,
-            PathBuf::from("PROJECT_ROOT_LOCATION")
-        );
-        assert_eq!(
-            configurations.entry_point_location,
-            PathBuf::from("PROJECT_ROOT_LOCATION/dist/index.js")
+            PathBuf::from("./tests/index.js").canonicalize().unwrap()
         );
         assert!(configurations.dry_run);
     }
@@ -213,6 +226,7 @@ mod tests {
         let source_image = source_image.as_str();
 
         env::set_var(SOURCE_IMAGE, source_image);
+        env::set_var(ENTRY_POINT_LOCATION, "tests/index.js");
 
         let configurations = DockerConfigurations::new();
 
@@ -234,6 +248,7 @@ mod tests {
         let source_image = source_image.as_str();
 
         env::set_var(SOURCE_IMAGE, source_image);
+        env::set_var(ENTRY_POINT_LOCATION, "tests/index.js");
 
         let configurations = DockerConfigurations::new();
 
@@ -248,11 +263,13 @@ mod tests {
     fn test_docker_default_configurations() {
         clean_docker_env();
 
+        env::set_var(ENTRY_POINT_LOCATION, "tests/index.js");
+
         let configurations = DockerConfigurations::new();
         assert_eq!(configurations.cli.project_root_location, PathBuf::from("."));
         assert_eq!(
             configurations.cli.entry_point_location,
-            PathBuf::from("./dist/index.js")
+            PathBuf::from("./tests/index.js").canonicalize().unwrap()
         );
         assert_eq!(configurations.source_image, DEFAULT_IMAGE_NAME);
         assert_eq!(

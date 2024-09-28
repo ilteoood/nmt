@@ -147,12 +147,15 @@ async fn main() -> Result<(), bollard::errors::Error> {
 
 #[cfg(test)]
 mod history_tests {
+    use std::env;
+
     use nmt::configurations::CliConfigurations;
 
     use super::*;
 
     #[tokio::test]
     async fn test_empty_container_configurations() {
+        env::set_var("ENTRY_POINT_LOCATION", "tests/index.js");
         let container_configurations = retrieve_config(
             &Docker::connect_with_socket_defaults().unwrap(),
             &DockerConfigurations::new(),
@@ -177,6 +180,7 @@ mod history_tests {
 
     #[tokio::test]
     async fn test_history() {
+        env::set_var("ENTRY_POINT_LOCATION", "tests/index.js");
         let container_configurations = retrieve_config(
             &Docker::connect_with_socket_defaults().unwrap(),
             &DockerConfigurations {
