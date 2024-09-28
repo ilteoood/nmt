@@ -40,7 +40,7 @@ pub struct CliConfigurations {
     #[arg(short, long, default_value_t = false, env = MINIFY)]
     pub minify: bool,
     /// A list of files to ignore
-    #[arg(short, long, env = KEEP)]
+    #[arg(short, long, env = KEEP, value_delimiter = ',')]
     pub keep: Option<Vec<String>>,
 }
 
