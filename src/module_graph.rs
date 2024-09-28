@@ -8,7 +8,7 @@ use oxc_allocator::Allocator;
 use oxc_ast::{ast::Expression, Visit};
 use oxc_parser::{ParseOptions, Parser};
 use oxc_resolver::{ResolveOptions, Resolver};
-use oxc_span::{ModuleKind, SourceType};
+use oxc_span::SourceType;
 
 use crate::configurations::CliConfigurations;
 
@@ -28,14 +28,8 @@ impl<'a> Visitor {
             paths_found: HashSet::from([configurations.entry_point_location.clone()]),
             current_path: PathBuf::new(),
             resolver: Resolver::new(ResolveOptions {
-                condition_names: match SourceType::from_path(&configurations.entry_point_location) {
-                    Ok(source_type) => match source_type.module_kind() {
-                        ModuleKind::Script => vec!["node".to_owned(), "require".to_owned()],
-                        ModuleKind::Module => vec!["node".to_owned(), "import".to_owned()],
-                        _ => vec![],
-                    },
-                    Err(_) => vec![],
-                },
+                exports_fields: vec![],
+                imports_fields: vec![],
                 ..Default::default()
             }),
         }
