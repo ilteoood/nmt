@@ -1283,6 +1283,7 @@ dependencies = [
  "oxc_resolver",
  "oxc_span",
  "remove_empty_subdirs",
+ "serde_json",
  "serial_test",
  "swc",
  "swc_common",

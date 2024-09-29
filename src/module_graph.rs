@@ -9,6 +9,7 @@ use oxc_ast::{ast::Expression, Visit};
 use oxc_parser::{ParseOptions, Parser};
 use oxc_resolver::{ResolveOptions, Resolver};
 use oxc_span::SourceType;
+use serde_json::Value;
 
 use crate::configurations::CliConfigurations;
 
@@ -34,10 +35,27 @@ impl<'a> Visitor {
             paths_found: initial_files.into_iter().collect::<HashSet<PathBuf>>(),
             current_path: PathBuf::new(),
             resolver: Resolver::new(ResolveOptions {
-                exports_fields: vec![],
-                imports_fields: vec![],
+                condition_names: Self::build_condition_names(&configurations),
                 ..Default::default()
             }),
+        }
+    }
+
+    fn build_condition_names(configurations: &CliConfigurations) -> Vec<String> {
+        let entry_point_resolver = Resolver::new(ResolveOptions::default());
+
+        match entry_point_resolver.resolve(&configurations.entry_point_location, ".") {
+            Ok(resolution) => match resolution.package_json() {
+                Some(package_json) => match package_json.r#type.clone() {
+                    Some(Value::String(package_type)) => match package_type.as_str() {
+                        "module" => vec!["node".to_owned(), "import".to_owned()],
+                        _ => vec!["node".to_owned(), "require".to_owned()],
+                    },
+                    _ => vec!["node".to_owned(), "require".to_owned()],
+                },
+                None => vec![],
+            },
+            Err(_) => vec![],
         }
     }
 
