@@ -18,7 +18,6 @@ pub struct Visitor {
     files_to_visit: VecDeque<PathBuf>,
     paths_found: HashSet<PathBuf>,
     current_path: PathBuf,
-    resolver: Resolver,
 }
 
 impl<'a> Visitor {
@@ -34,17 +33,20 @@ impl<'a> Visitor {
             files_to_visit: VecDeque::from(initial_files.clone()),
             paths_found: initial_files.into_iter().collect::<HashSet<PathBuf>>(),
             current_path: PathBuf::new(),
-            resolver: Resolver::new(ResolveOptions {
-                condition_names: Self::build_condition_names(&configurations),
-                ..Default::default()
-            }),
         }
     }
 
-    fn build_condition_names(configurations: &CliConfigurations) -> Vec<String> {
+    fn build_resolver(&mut self) -> Resolver {
+        Resolver::new(ResolveOptions {
+            condition_names: self.build_condition_names(),
+            ..Default::default()
+        })
+    }
+
+    fn build_condition_names(&mut self) -> Vec<String> {
         let entry_point_resolver = Resolver::new(ResolveOptions::default());
 
-        match entry_point_resolver.resolve(&configurations.entry_point_location, ".") {
+        match entry_point_resolver.resolve(&self.current_path, ".") {
             Ok(resolution) => match resolution.package_json() {
                 Some(package_json) => match package_json.r#type.clone() {
                     Some(Value::String(package_type)) => match package_type.as_str() {
@@ -117,11 +119,10 @@ impl<'a> Visitor {
     fn resolve_modules_to_visit(&mut self) {
         let specifiers: Vec<String> = self.modules_to_visit.drain().collect();
 
+        let resolver = self.build_resolver();
+
         for specifier in specifiers {
-            match self
-                .resolver
-                .resolve(&self.current_path, specifier.as_str())
-            {
+            match resolver.resolve(&self.current_path, specifier.as_str()) {
                 Err(_) => {}
                 Ok(resolution) => {
                     if let Some(package_json) = resolution.package_json() {
