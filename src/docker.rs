@@ -167,7 +167,7 @@ mod history_tests {
             container_configurations,
             ContainerConfigurations {
                 workdir: Some(String::from("WORKDIR /")),
-                command: Some(String::from("CMD /hello")),
+                command: Some(String::from("CMD [\"/hello\"]")),
                 entry_point: None,
                 health_check: None,
                 user: None,
@@ -197,7 +197,7 @@ mod history_tests {
             ContainerConfigurations {
                 workdir: Some(String::from("WORKDIR /app")),
                 command: None,
-                entry_point: Some(String::from("ENTRYPOINT node index.js")),
+                entry_point: Some(String::from("ENTRYPOINT [\"node\", \"index.js\"]")),
                 health_check: None,
                 user: None,
                 env: Some(String::from("ENV PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\nENV NODE_VERSION=20.17.0\nENV YARN_VERSION=1.22.22")),

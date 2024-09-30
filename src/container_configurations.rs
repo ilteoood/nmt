@@ -26,10 +26,10 @@ impl ContainerConfigurations {
                 .map(|workdir| format!("WORKDIR {}", workdir)),
             command: container_config
                 .cmd
-                .map(|command| format!("CMD {}", command.join(" "))),
+                .map(|command| format!("CMD {:?}", command)),
             entry_point: container_config
                 .entrypoint
-                .map(|entry_point| format!("ENTRYPOINT {}", entry_point.join(" "))),
+                .map(|entry_point| format!("ENTRYPOINT {:?}", entry_point)),
             user: match container_config.user {
                 Some(ref user) if !user.is_empty() => Some(format!("USER {}", user)),
                 _ => None,
