@@ -148,8 +148,8 @@ impl<'a> Visitor {
         self.current_path = path;
 
         match std::fs::read_to_string(&self.current_path) {
-            Err(error) => {
-                println!("Read error: {error} at {}", self.current_path.display());
+            Err(_) => {
+                self.add_path(self.current_path.clone());
             }
             Ok(source_text) => {
                 let allocator = Allocator::default();
