@@ -88,10 +88,18 @@ impl<'a> Visitor {
         }
     }
 
+    fn is_local_module(module: &String) -> bool {
+        module.starts_with("..") || module.starts_with(".")
+    }
+
     fn insert_module_to_visit(&mut self, module: String) {
         if module.ends_with(".json") || module.ends_with(".node") {
-            self.add_path(self.current_path.parent().unwrap().join(module));
-        } else if module.starts_with("..") || module.starts_with(".") {
+            if Self::is_local_module(&module) {
+                self.add_path(self.current_path.parent().unwrap().join(module));
+            } else {
+                self.modules_to_visit.insert(module);
+            }
+        } else if Self::is_local_module(&module) {
             if let Some(path) = self.retrieve_file_path(module) {
                 self.add_path_to_visit(path);
             }
