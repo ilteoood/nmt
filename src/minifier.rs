@@ -1,7 +1,7 @@
 //! Minify JavaScript files
 
+use anyhow::anyhow;
 use std::{collections::HashSet, fs, path::PathBuf, sync::Arc};
-
 use swc::{config, try_with_handler, BoolConfig, BoolOrDataConfig};
 use swc_common::{SourceMap, GLOBALS};
 use swc_ecma_ast::EsVersion;
@@ -33,11 +33,10 @@ fn build_compiler() -> impl Fn(&PathBuf) -> Result<String, String> {
         let c = swc::Compiler::new(cm.clone());
         let output = GLOBALS.set(&Default::default(), || {
             try_with_handler(cm.clone(), Default::default(), |handler| {
-                let fm = cm
-                    .load_file(path.as_path())
-                    .unwrap_or_else(|_| panic!("failed to load file: {}", path.display()));
-
-                c.process_js_file(fm, handler, &opts)
+                match cm.load_file(path.as_path()) {
+                    Ok(fm) => c.process_js_file(fm, handler, &opts),
+                    Err(err) => Err(anyhow!("failed to load file: {}: {}", path.display(), err)),
+                }
             })
         });
 

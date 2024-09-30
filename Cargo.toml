@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+anyhow = "1.0.89"
 bollard = "0.17.0"
 clap = { version = "4.5.16", features = ["derive", "env", "string"] }
 dirs = "5.0.1"
