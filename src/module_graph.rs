@@ -9,12 +9,17 @@ use oxc_ast::{ast::Expression, Visit};
 use oxc_parser::{ParseOptions, Parser};
 use oxc_resolver::{ResolveOptions, Resolver};
 use oxc_span::SourceType;
-use serde_json::Value;
 
 use crate::configurations::CliConfigurations;
 
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+struct ModuleToVisit {
+    name: String,
+    is_cjs: bool,
+}
+
 pub struct Visitor {
-    modules_to_visit: HashSet<String>,
+    modules_to_visit: HashSet<ModuleToVisit>,
     files_to_visit: VecDeque<PathBuf>,
     paths_found: HashSet<PathBuf>,
     current_path: PathBuf,
@@ -36,29 +41,18 @@ impl<'a> Visitor {
         }
     }
 
-    fn build_resolver(&mut self) -> Resolver {
+    fn build_resolver(&mut self, is_cjs: bool) -> Resolver {
         Resolver::new(ResolveOptions {
-            condition_names: self.build_condition_names(),
+            condition_names: Self::build_condition_names(is_cjs),
             ..Default::default()
         })
     }
 
-    fn build_condition_names(&mut self) -> Vec<String> {
-        let entry_point_resolver = Resolver::new(ResolveOptions::default());
-
-        match entry_point_resolver.resolve(&self.current_path, ".") {
-            Ok(resolution) => match resolution.package_json() {
-                Some(package_json) => match package_json.r#type.clone() {
-                    Some(Value::String(package_type)) => match package_type.as_str() {
-                        "module" => vec!["node".to_owned(), "import".to_owned()],
-                        _ => vec!["node".to_owned(), "require".to_owned()],
-                    },
-                    _ => vec!["node".to_owned(), "require".to_owned()],
-                },
-                None => vec![],
-            },
-            Err(_) => vec![],
+    fn build_condition_names(is_cjs: bool) -> Vec<String> {
+        if is_cjs {
+            return vec!["node".to_owned(), "require".to_owned()];
         }
+        vec!["node".to_owned(), "import".to_owned()]
     }
 
     fn retrieve_file_path(&mut self, module: String) -> Option<PathBuf> {
@@ -94,35 +88,40 @@ impl<'a> Visitor {
         module.starts_with("..") || module.starts_with(".")
     }
 
-    fn insert_module_to_visit(&mut self, module: String) {
+    fn insert_module_to_visit(&mut self, module: String, is_cjs: bool) {
         if module.ends_with(".json") || module.ends_with(".node") {
             if Self::is_local_module(&module) {
                 self.add_path(self.current_path.parent().unwrap().join(module));
             } else {
-                self.modules_to_visit.insert(module);
+                self.modules_to_visit.insert(ModuleToVisit {
+                    name: module,
+                    is_cjs,
+                });
             }
         } else if Self::is_local_module(&module) {
             if let Some(path) = self.retrieve_file_path(module) {
                 self.add_path_to_visit(path);
             }
         } else if !module.starts_with("node:") {
-            self.modules_to_visit.insert(module);
+            self.modules_to_visit.insert(ModuleToVisit {
+                name: module,
+                is_cjs,
+            });
         }
     }
 
-    fn insert_first_argument(&mut self, it: &oxc_ast::ast::CallExpression<'a>) {
+    fn insert_first_argument(&mut self, it: &oxc_ast::ast::CallExpression<'a>, is_cjs: bool) {
         if let Some(Expression::StringLiteral(lit)) = &it.arguments[0].as_expression() {
-            self.insert_module_to_visit(lit.value.to_string());
+            self.insert_module_to_visit(lit.value.to_string(), is_cjs);
         }
     }
 
     fn resolve_modules_to_visit(&mut self) {
-        let specifiers: Vec<String> = self.modules_to_visit.drain().collect();
-
-        let resolver = self.build_resolver();
+        let specifiers: Vec<ModuleToVisit> = self.modules_to_visit.drain().collect();
 
         for specifier in specifiers {
-            match resolver.resolve(&self.current_path, specifier.as_str()) {
+            let resolver = self.build_resolver(specifier.is_cjs);
+            match resolver.resolve(&self.current_path, &specifier.name) {
                 Err(_) => {}
                 Ok(resolution) => {
                     if let Some(package_json) = resolution.package_json() {
@@ -177,16 +176,16 @@ impl<'a> Visitor {
 
 impl<'a> Visit<'a> for Visitor {
     fn visit_import_declaration(&mut self, it: &oxc_ast::ast::ImportDeclaration<'a>) {
-        self.insert_module_to_visit(it.source.to_string());
+        self.insert_module_to_visit(it.source.to_string(), false);
     }
 
     fn visit_call_expression(&mut self, it: &oxc_ast::ast::CallExpression<'a>) {
         match it.common_js_require() {
-            Some(lit) => self.insert_module_to_visit(lit.value.to_string()),
+            Some(lit) => self.insert_module_to_visit(lit.value.to_string(), true),
             None => match &it.callee {
                 Expression::StaticMemberExpression(static_member_expression) => {
                     if it.callee.is_specific_member_access("require", "resolve") {
-                        self.insert_first_argument(it);
+                        self.insert_first_argument(it, true);
                     } else if let Expression::MetaProperty(meta_property) =
                         &static_member_expression.object
                     {
@@ -194,7 +193,7 @@ impl<'a> Visit<'a> for Visitor {
                             && meta_property.property.name.as_str() == "meta"
                             && it.callee_name() == Some("resolve")
                         {
-                            self.insert_first_argument(it);
+                            self.insert_first_argument(it, false);
                         }
                     } else {
                         self.deep_call_expression(it);
@@ -207,17 +206,17 @@ impl<'a> Visit<'a> for Visitor {
 
     fn visit_export_named_declaration(&mut self, it: &oxc_ast::ast::ExportNamedDeclaration<'a>) {
         if let Some(source) = it.source.as_ref() {
-            self.insert_module_to_visit(source.to_string());
+            self.insert_module_to_visit(source.to_string(), false);
         }
     }
 
     fn visit_export_all_declaration(&mut self, it: &oxc_ast::ast::ExportAllDeclaration<'a>) {
-        self.insert_module_to_visit(it.source.to_string());
+        self.insert_module_to_visit(it.source.to_string(), false);
     }
 
     fn visit_import_expression(&mut self, it: &oxc_ast::ast::ImportExpression<'a>) {
         if let oxc_ast::ast::Expression::StringLiteral(source_lit) = &it.source {
-            self.insert_module_to_visit(source_lit.value.to_string());
+            self.insert_module_to_visit(source_lit.value.to_string(), false);
         }
     }
 }
@@ -248,7 +247,20 @@ mod specifier_tests {
 
         assert_eq!(
             visitor.modules_to_visit,
-            HashSet::from(["path".to_string(), "stream".to_string(), "fs".to_string()])
+            HashSet::from([
+                ModuleToVisit {
+                    name: "path".to_owned(),
+                    is_cjs: false
+                },
+                ModuleToVisit {
+                    name: "stream".to_owned(),
+                    is_cjs: false
+                },
+                ModuleToVisit {
+                    name: "fs".to_owned(),
+                    is_cjs: false
+                },
+            ])
         );
     }
 
@@ -267,7 +279,16 @@ mod specifier_tests {
 
         assert_eq!(
             visitor.modules_to_visit,
-            HashSet::from(["fastify".to_string(), "stream".to_string()])
+            HashSet::from([
+                ModuleToVisit {
+                    name: "fastify".to_owned(),
+                    is_cjs: false
+                },
+                ModuleToVisit {
+                    name: "stream".to_owned(),
+                    is_cjs: false
+                },
+            ])
         );
     }
 
@@ -287,10 +308,22 @@ mod specifier_tests {
         assert_eq!(
             visitor.modules_to_visit,
             HashSet::from([
-                "path".to_owned(),
-                "stream".to_owned(),
-                "module".to_owned(),
-                "depd".to_owned()
+                ModuleToVisit {
+                    name: "path".to_owned(),
+                    is_cjs: true
+                },
+                ModuleToVisit {
+                    name: "stream".to_owned(),
+                    is_cjs: true
+                },
+                ModuleToVisit {
+                    name: "module".to_owned(),
+                    is_cjs: true
+                },
+                ModuleToVisit {
+                    name: "depd".to_owned(),
+                    is_cjs: true
+                },
             ])
         );
     }
