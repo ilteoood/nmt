@@ -12,7 +12,7 @@ use oxc_span::SourceType;
 
 use crate::configurations::CliConfigurations;
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, PartialEq, Eq, Hash)]
 struct ModuleToVisit {
     name: String,
     is_cjs: bool,
