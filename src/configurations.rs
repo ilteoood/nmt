@@ -146,7 +146,8 @@ impl CliConfigurations {
         });
 
         env += format!(
-            "ENV {}={:?}",
+            "ENV {}={:?}
+",
             ENTRY_POINT_LOCATION,
             self.entry_point_location
                 .clone()
@@ -170,7 +171,7 @@ impl CliConfigurations {
             });
 
         if let Some(keep) = &self.keep {
-            env += format!("ENV {}={}", KEEP, keep.join(",")).as_str();
+            env += format!("ENV {}={:?}", KEEP, keep.join(",")).as_str();
         }
 
         env.trim_end().to_owned()
@@ -256,7 +257,7 @@ mod tests {
 
         assert_eq!(
             configurations.to_dockerfile_env(),
-            "ENV PROJECT_ROOT_LOCATION=PROJECT_ROOT_LOCATION\nENV NODE_MODULES_LOCATION=node_modules\nENV HOME_LOCATION=~\nENV ENTRY_POINT_LOCATION=\"dist/index.js\"ENV DRY_RUN=true\nENV KEEP=path/1,path/2"
+            "ENV PROJECT_ROOT_LOCATION=PROJECT_ROOT_LOCATION\nENV NODE_MODULES_LOCATION=node_modules\nENV HOME_LOCATION=~\nENV ENTRY_POINT_LOCATION=\"dist/index.js\"\nENV DRY_RUN=true\nENV KEEP=\"path/1,path/2\""
         );
     }
 
