@@ -128,7 +128,7 @@ mod tests {
             entry_point_location: "tests/index.js".into(),
             ..Default::default()
         };
-        remove_empty_dirs(&configurations);
+        remove_empty_dirs(configurations);
     }
 
     #[test]
@@ -155,19 +155,16 @@ mod tests {
             &HashSet::from([legit_esm_path.clone(), legit_path.clone()]),
         );
 
-        assert_eq!(node_modules_location.join("@types").exists(), false);
-        assert_eq!(node_modules_location.join("busboy").exists(), false);
-        assert_eq!(node_modules_location.join("fastify").exists(), false);
+        assert!(!node_modules_location.join("@types").exists());
+        assert!(!node_modules_location.join("busboy").exists());
+        assert!(!node_modules_location.join("fastify").exists());
         assert!(node_modules_location.join("ilteoood").exists());
         assert!(legit_esm_path.exists());
         assert!(legit_path.exists());
-        assert_eq!(
-            node_modules_location
-                .join("ilteoood")
-                .join("unlegit.min.js")
-                .exists(),
-            false
-        );
+        assert!(!node_modules_location
+            .join("ilteoood")
+            .join("unlegit.min.js")
+            .exists());
 
         temp.close().unwrap();
     }
