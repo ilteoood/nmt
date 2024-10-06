@@ -6,8 +6,10 @@ fn main() {
 
     let module_graph = Visitor::new(configurations).run();
 
+    let cleaner = cleaner::Cleaner::from_module_graph(configurations, &module_graph);
+
     if !configurations.dry_run {
-        cleaner::clean(configurations, &module_graph);
+        cleaner.clean();
     } else {
         println!("Dry run. These are the paths that should be kept:");
         module_graph
