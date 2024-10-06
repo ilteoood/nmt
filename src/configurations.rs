@@ -31,7 +31,7 @@ pub struct CliConfigurations {
     pub project_root_location: PathBuf,
     /// Path to the application's entry point
     #[arg(short, long, default_value = DEFAULT_ENTRY_POINT_LOCATION, env = ENTRY_POINT_LOCATION)]
-    pub entry_point_location: PathBuf,
+    pub entry_point_location: Vec<PathBuf>,
     /// Path to the node_modules directory
     #[arg(
         short,
@@ -86,10 +86,18 @@ impl CliConfigurations {
         }
 
         self.entry_point_location = self
-            .project_root_location
-            .join(&self.entry_point_location)
-            .canonicalize()
-            .expect("Failed to canonicalize entry point location");
+            .entry_point_location
+            .iter()
+            .map(|path| {
+                self.project_root_location.join(path).canonicalize().expect(
+                    format!(
+                        "Failed to canonicalize entry point location {}",
+                        path.display()
+                    )
+                    .as_str(),
+                )
+            })
+            .collect();
 
         self.node_modules_location = self
             .project_root_location
@@ -124,7 +132,6 @@ impl CliConfigurations {
 
         [
             (PROJECT_ROOT_LOCATION, self.project_root_location.display()),
-            (ENTRY_POINT_LOCATION, self.entry_point_location.display()),
             (NODE_MODULES_LOCATION, self.node_modules_location.display()),
             (HOME_LOCATION, self.home_location.display()),
         ]
@@ -137,6 +144,18 @@ impl CliConfigurations {
             )
             .as_str();
         });
+
+        env += format!(
+            "ENV {}={:?}",
+            ENTRY_POINT_LOCATION,
+            self.entry_point_location
+                .clone()
+                .into_iter()
+                .map(|path| path.display().to_string())
+                .collect::<Vec<String>>()
+                .join(",")
+        )
+        .as_str();
 
         [(DRY_RUN, self.dry_run), (MINIFY, self.minify)]
             .iter()
@@ -210,7 +229,7 @@ mod tests {
         assert_eq!(configurations.project_root_location, PathBuf::from("tests"));
         assert_eq!(
             configurations.entry_point_location,
-            PathBuf::from("./tests/index.js").canonicalize().unwrap()
+            vec![PathBuf::from("./tests/index.js").canonicalize().unwrap()]
         );
         assert!(configurations.dry_run);
     }
@@ -223,7 +242,7 @@ mod tests {
 
         assert_eq!(
             configurations.to_dockerfile_env(),
-            "ENV PROJECT_ROOT_LOCATION=.\nENV ENTRY_POINT_LOCATION=dist/index.js\nENV NODE_MODULES_LOCATION=node_modules\nENV HOME_LOCATION=~"
+            "ENV PROJECT_ROOT_LOCATION=.\nENV NODE_MODULES_LOCATION=node_modules\nENV HOME_LOCATION=~\nENV ENTRY_POINT_LOCATION=\"dist/index.js\""
         );
     }
 
@@ -237,7 +256,7 @@ mod tests {
 
         assert_eq!(
             configurations.to_dockerfile_env(),
-            "ENV PROJECT_ROOT_LOCATION=PROJECT_ROOT_LOCATION\nENV ENTRY_POINT_LOCATION=dist/index.js\nENV NODE_MODULES_LOCATION=node_modules\nENV HOME_LOCATION=~\nENV DRY_RUN=true\nENV KEEP=path/1,path/2"
+            "ENV PROJECT_ROOT_LOCATION=PROJECT_ROOT_LOCATION\nENV NODE_MODULES_LOCATION=node_modules\nENV HOME_LOCATION=~\nENV ENTRY_POINT_LOCATION=\"dist/index.js\"ENV DRY_RUN=true\nENV KEEP=path/1,path/2"
         );
     }
 
@@ -301,7 +320,7 @@ mod tests {
         assert_eq!(configurations.cli.project_root_location, PathBuf::from("."));
         assert_eq!(
             configurations.cli.entry_point_location,
-            PathBuf::from("dist/index.js")
+            vec![PathBuf::from("dist/index.js")]
         );
         assert_eq!(configurations.source_image, DEFAULT_IMAGE_NAME);
         assert_eq!(

@@ -29,7 +29,7 @@ impl<'a> Visitor {
     pub fn new(configurations: &CliConfigurations) -> Self {
         let initial_files = [
             configurations.keep_files(),
-            vec![configurations.entry_point_location.clone()],
+            configurations.entry_point_location.clone(),
         ]
         .concat();
 
@@ -240,7 +240,7 @@ mod specifier_tests {
             .join("legit.esm.js");
 
         let mut visitor = Visitor::new(&CliConfigurations {
-            entry_point_location: path.clone(),
+            entry_point_location: vec![path.clone()],
             ..Default::default()
         });
         visitor.visit_path(path);
@@ -272,7 +272,7 @@ mod specifier_tests {
             .join("unlegit.min.js");
 
         let mut visitor = Visitor::new(&CliConfigurations {
-            entry_point_location: path.clone(),
+            entry_point_location: vec![path.clone()],
             ..Default::default()
         });
         visitor.visit_path(path);
@@ -300,7 +300,7 @@ mod specifier_tests {
             .join("legit.js");
 
         let mut visitor = Visitor::new(&CliConfigurations {
-            entry_point_location: path.clone(),
+            entry_point_location: vec![path.clone()],
             ..Default::default()
         });
         visitor.visit_path(path);
@@ -345,7 +345,7 @@ mod resolve_tests {
         let path = tests_dir.join("index.js");
 
         let mut visitor = Visitor::new(&CliConfigurations {
-            entry_point_location: path.clone(),
+            entry_point_location: vec![path.clone()],
             ..Default::default()
         });
 

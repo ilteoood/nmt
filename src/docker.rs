@@ -50,6 +50,7 @@ fn create_dockerfile(
     FROM {} as source_image
     COPY --from=nmt_trimmer ./cli .
     {}
+    USER root
     RUN ./cli && rm -f ./cli
     FROM scratch
     COPY --from=source_image / /
