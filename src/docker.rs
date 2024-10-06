@@ -153,9 +153,14 @@ mod history_tests {
 
     use super::*;
 
+    fn set_env_variables() {
+        env::set_var("PROJECT_ROOT_LOCATION", "tests");
+        env::set_var("ENTRY_POINT_LOCATION", "index.js");
+    }
+
     #[tokio::test]
     async fn test_empty_container_configurations() {
-        env::set_var("ENTRY_POINT_LOCATION", "tests/index.js");
+        set_env_variables();
         let container_configurations = retrieve_config(
             &Docker::connect_with_socket_defaults().unwrap(),
             &DockerConfigurations::new(),
@@ -180,7 +185,7 @@ mod history_tests {
 
     #[tokio::test]
     async fn test_history() {
-        env::set_var("ENTRY_POINT_LOCATION", "tests/index.js");
+        set_env_variables();
         let container_configurations = retrieve_config(
             &Docker::connect_with_socket_defaults().unwrap(),
             &DockerConfigurations {

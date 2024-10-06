@@ -12,12 +12,14 @@ use crate::{configurations::CliConfigurations, glob::retrieve_glob_paths};
 ///
 /// This function retrieves all JavaScript files from the node_modules directory
 /// and returns them as a vector of `PathBuf`s.
-fn retrieve_js_files(configurations: &CliConfigurations) -> Vec<PathBuf> {
+fn retrieve_files_by_extension(
+    configurations: &CliConfigurations,
+    extension: &str,
+) -> Vec<PathBuf> {
     let js_glob_path = configurations
-        .project_root_location
-        .join("node_modules")
+        .node_modules_location
         .join("**")
-        .join("*.*js");
+        .join(format!("*.*{}", extension));
 
     let js_glob_path = js_glob_path.display();
 
@@ -73,7 +75,7 @@ fn build_compiler() -> impl Fn(&PathBuf) -> Result<String, String> {
 /// This function takes a vector of `PathBuf`s and minifies each file. The
 /// minified file is then written to the same location as the original file.
 pub fn minify_js(configurations: &CliConfigurations) {
-    let to_minify = retrieve_js_files(configurations);
+    let to_minify = retrieve_files_by_extension(configurations, "js");
     let compiler = build_compiler();
 
     for path in to_minify {
@@ -87,6 +89,33 @@ pub fn minify_js(configurations: &CliConfigurations) {
             Err(error) => println!("Failed to minify file {}: {}", path.display(), error),
         }
     }
+}
+
+pub fn minify_json(configurations: &CliConfigurations) {
+    let to_minify = retrieve_files_by_extension(configurations, "json");
+
+    for path in to_minify {
+        match fs::read_to_string(&path) {
+            Ok(json_string) => match serde_json::from_str::<serde_json::Value>(&json_string) {
+                Ok(json_reader) => match serde_json::to_string(&json_reader) {
+                    Ok(minified_json_string) => match fs::write(&path, minified_json_string) {
+                        Ok(_) => println!("File minified: {}", path.display()),
+                        Err(error) => {
+                            println!("Failed to write file {}: {}", path.display(), error)
+                        }
+                    },
+                    Err(error) => println!("Failed to minify file {}: {}", path.display(), error),
+                },
+                Err(error) => println!("Failed to parse file {}: {}", path.display(), error),
+            },
+            Err(error) => println!("Failed to read file {}: {}", path.display(), error),
+        }
+    }
+}
+
+pub fn minify(configurations: &CliConfigurations) {
+    minify_js(configurations);
+    minify_json(configurations);
 }
 
 #[cfg(test)]

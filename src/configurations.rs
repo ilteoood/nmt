@@ -9,6 +9,7 @@ use crate::glob::retrieve_glob_paths;
 
 const PROJECT_ROOT_LOCATION: &str = "PROJECT_ROOT_LOCATION";
 const ENTRY_POINT_LOCATION: &str = "ENTRY_POINT_LOCATION";
+const NODE_MODULES_LOCATION: &str = "NODE_MODULES_LOCATION";
 const KEEP: &str = "KEEP";
 const HOME_LOCATION: &str = "HOME_LOCATION";
 const DRY_RUN: &str = "DRY_RUN";
@@ -19,6 +20,7 @@ const DEFAULT_IMAGE_NAME: &str = "hello-world";
 const DEFAULT_HOME_DIR: &str = "~";
 const DEFAULT_ROOT_LOCATION: &str = ".";
 const DEFAULT_ENTRY_POINT_LOCATION: &str = "dist/index.js";
+const NODE_MODULES: &str = "node_modules";
 
 /// Configuration for the CLI
 #[derive(Debug, Parser, Default)]
@@ -30,6 +32,14 @@ pub struct CliConfigurations {
     /// Path to the application's entry point
     #[arg(short, long, default_value = DEFAULT_ENTRY_POINT_LOCATION, env = ENTRY_POINT_LOCATION)]
     pub entry_point_location: PathBuf,
+    /// Path to the node_modules directory
+    #[arg(
+        short,
+        long,
+        default_value = NODE_MODULES,
+        env = NODE_MODULES_LOCATION
+    )]
+    pub node_modules_location: PathBuf,
     /// Path to the home directory
     #[arg(short = 'H', long, default_value = DEFAULT_HOME_DIR, env = HOME_LOCATION)]
     pub home_location: PathBuf,
@@ -80,6 +90,12 @@ impl CliConfigurations {
             .join(&self.entry_point_location)
             .canonicalize()
             .expect("Failed to canonicalize entry point location");
+
+        self.node_modules_location = self
+            .project_root_location
+            .join(&self.node_modules_location)
+            .canonicalize()
+            .expect("Failed to canonicalize node modules location");
     }
 
     pub fn keep_files(&self) -> Vec<PathBuf> {
@@ -109,6 +125,7 @@ impl CliConfigurations {
         [
             (PROJECT_ROOT_LOCATION, self.project_root_location.display()),
             (ENTRY_POINT_LOCATION, self.entry_point_location.display()),
+            (NODE_MODULES_LOCATION, self.node_modules_location.display()),
             (HOME_LOCATION, self.home_location.display()),
         ]
         .iter()
@@ -186,10 +203,11 @@ mod tests {
     #[test]
     fn test_cli_configurations() {
         clean_cli_env();
+        env::set_var(PROJECT_ROOT_LOCATION, "tests");
         env::set_var(DRY_RUN, "true");
-        env::set_var(ENTRY_POINT_LOCATION, "tests/index.js");
+        env::set_var(ENTRY_POINT_LOCATION, "index.js");
         let configurations = CliConfigurations::new();
-        assert_eq!(configurations.project_root_location, PathBuf::from("."));
+        assert_eq!(configurations.project_root_location, PathBuf::from("tests"));
         assert_eq!(
             configurations.entry_point_location,
             PathBuf::from("./tests/index.js").canonicalize().unwrap()
@@ -205,7 +223,7 @@ mod tests {
 
         assert_eq!(
             configurations.to_dockerfile_env(),
-            "ENV PROJECT_ROOT_LOCATION=.\nENV ENTRY_POINT_LOCATION=dist/index.js\nENV HOME_LOCATION=~"
+            "ENV PROJECT_ROOT_LOCATION=.\nENV ENTRY_POINT_LOCATION=dist/index.js\nENV NODE_MODULES_LOCATION=node_modules\nENV HOME_LOCATION=~"
         );
     }
 
@@ -219,7 +237,7 @@ mod tests {
 
         assert_eq!(
             configurations.to_dockerfile_env(),
-            "ENV PROJECT_ROOT_LOCATION=PROJECT_ROOT_LOCATION\nENV ENTRY_POINT_LOCATION=dist/index.js\nENV HOME_LOCATION=~\nENV DRY_RUN=true\nENV KEEP=path/1,path/2"
+            "ENV PROJECT_ROOT_LOCATION=PROJECT_ROOT_LOCATION\nENV ENTRY_POINT_LOCATION=dist/index.js\nENV NODE_MODULES_LOCATION=node_modules\nENV HOME_LOCATION=~\nENV DRY_RUN=true\nENV KEEP=path/1,path/2"
         );
     }
 
