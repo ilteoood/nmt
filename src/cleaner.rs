@@ -9,14 +9,14 @@ use remove_empty_subdirs::remove_empty_subdirs;
 fn delete_path(path: &PathBuf) {
     let path_location = path.display();
     println!("Removing: {path_location}");
-    let metadata = fs::metadata(&path);
+    let metadata = fs::metadata(path);
 
     match metadata {
         Ok(metadata) => {
             let remove_result = if metadata.is_dir() {
-                fs::remove_dir_all(&path)
+                fs::remove_dir_all(path)
             } else {
-                fs::remove_file(&path)
+                fs::remove_file(path)
             };
 
             match remove_result {
