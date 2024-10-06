@@ -6,7 +6,7 @@ use crate::{configurations::CliConfigurations, glob::retrieve_glob_paths};
 use remove_empty_subdirs::remove_empty_subdirs;
 
 /// Deletes a path
-fn delete_path(path: PathBuf) {
+fn delete_path(path: &PathBuf) {
     let path_location = path.display();
     println!("Removing: {}", path_location);
     let metadata = fs::metadata(&path);
@@ -39,13 +39,13 @@ fn remove_empty_dirs(configurations: &CliConfigurations) {
 /// Deletes pnpm cache
 fn delete_pnpm_cache(configurations: &CliConfigurations) {
     delete_path(
-        configurations
+        &configurations
             .home_location
             .join(".pnpm-state")
             .to_path_buf(),
     );
     delete_path(
-        configurations
+        &configurations
             .home_location
             .join(".local")
             .join("share")
@@ -57,19 +57,19 @@ fn delete_pnpm_cache(configurations: &CliConfigurations) {
 /// Deletes lock files
 fn delete_lock_files(configurations: &CliConfigurations) {
     delete_path(
-        configurations
+        &configurations
             .project_root_location
             .join("package-lock.json")
             .to_path_buf(),
     );
     delete_path(
-        configurations
+        &configurations
             .project_root_location
             .join("yarn.lock")
             .to_path_buf(),
     );
     delete_path(
-        configurations
+        &configurations
             .project_root_location
             .join("pnpm-lock.yaml")
             .to_path_buf(),
@@ -103,10 +103,10 @@ fn retrieve_garbage(
 pub fn clean(configurations: &CliConfigurations, module_graph: &HashSet<PathBuf>) {
     let garbage = retrieve_garbage(configurations, module_graph);
     for path in garbage {
-        delete_path(path);
+        delete_path(&path);
     }
     remove_empty_dirs(configurations);
-    delete_path(configurations.home_location.join(".npm").to_path_buf());
+    delete_path(&configurations.home_location.join(".npm").to_path_buf());
     delete_pnpm_cache(configurations);
     delete_lock_files(configurations);
 }
