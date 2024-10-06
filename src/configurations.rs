@@ -40,7 +40,7 @@ pub struct CliConfigurations {
     /// Path to the application's entry point
     #[arg(short, long, default_value = DEFAULT_ENTRY_POINT_LOCATION, env = ENTRY_POINT_LOCATION, value_delimiter = ',')]
     pub entry_point_location: Vec<PathBuf>,
-    /// Path to the node_modules directory
+    /// Path to the `node_modules` directory
     #[arg(
         short,
         long,
@@ -92,7 +92,7 @@ impl CliConfigurations {
     pub fn post_parse(&mut self) {
         if self.home_location.display().to_string() == DEFAULT_HOME_DIR {
             self.home_location =
-                dirs::home_dir().unwrap_or(Path::new(DEFAULT_ROOT_LOCATION).to_path_buf())
+                dirs::home_dir().unwrap_or(Path::new(DEFAULT_ROOT_LOCATION).to_path_buf());
         }
 
         self.entry_point_location = self
@@ -140,9 +140,9 @@ impl CliConfigurations {
 
     /// Converts the configuration to a Dockerfile
     pub fn to_dockerfile_env(&self) -> String {
-        let mut env = "".to_owned();
+        let mut env = String::new();
 
-        [
+        for (env_name, value) in &[
             (
                 PROJECT_ROOT_LOCATION,
                 self.project_root_location.display().to_string(),
@@ -153,16 +153,13 @@ impl CliConfigurations {
             ),
             (HOME_LOCATION, self.home_location.display().to_string()),
             (STRATEGY, self.strategy.to_string()),
-        ]
-        .iter()
-        .for_each(|(env_name, value)| {
+        ] {
             env += format!(
-                "ENV {}={}
-",
-                env_name, value
+                "ENV {env_name}={value}
+"
             )
             .as_str();
-        });
+        }
 
         env += format!(
             "ENV {}={:?}
@@ -182,9 +179,8 @@ impl CliConfigurations {
             .filter(|(_, value)| *value)
             .for_each(|(env_name, value)| {
                 env += format!(
-                    "ENV {}={}
-",
-                    env_name, value
+                    "ENV {env_name}={value}
+"
                 )
                 .as_str();
             });
@@ -201,8 +197,8 @@ impl DockerConfigurations {
     /// Sets the default destination image
     pub fn default_destination_image(&mut self) {
         if self.destination_image.is_empty() {
-            self.destination_image = self.source_image.split(":").collect::<Vec<&str>>()[0]
-                .split("@")
+            self.destination_image = self.source_image.split(':').collect::<Vec<&str>>()[0]
+                .split('@')
                 .collect::<Vec<&str>>()[0]
                 .to_string()
                 + ":trimmed";
@@ -296,7 +292,7 @@ mod tests {
     fn test_docker_tag_configurations() {
         clean_docker_env();
 
-        let source_image = format!("{}:foo", DEFAULT_IMAGE_NAME);
+        let source_image = format!("{DEFAULT_IMAGE_NAME}:foo");
         let source_image = source_image.as_str();
 
         env::set_var(SOURCE_IMAGE, source_image);
@@ -316,8 +312,7 @@ mod tests {
         clean_docker_env();
 
         let source_image = format!(
-            "{}:@sha256:c34ce3c1fcc0c7431e1392cc3abd0dfe2192ffea1898d5250f199d3ac8d8720f",
-            DEFAULT_IMAGE_NAME
+            "{DEFAULT_IMAGE_NAME}:@sha256:c34ce3c1fcc0c7431e1392cc3abd0dfe2192ffea1898d5250f199d3ac8d8720f"
         );
         let source_image = source_image.as_str();
 

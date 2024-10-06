@@ -23,15 +23,15 @@ impl ContainerConfigurations {
         ContainerConfigurations {
             workdir: container_config
                 .working_dir
-                .map(|workdir| format!("WORKDIR {}", workdir)),
+                .map(|workdir| format!("WORKDIR {workdir}")),
             command: container_config
                 .cmd
-                .map(|command| format!("CMD {:?}", command)),
+                .map(|command| format!("CMD {command:?}")),
             entry_point: container_config
                 .entrypoint
-                .map(|entry_point| format!("ENTRYPOINT {:?}", entry_point)),
+                .map(|entry_point| format!("ENTRYPOINT {entry_point:?}")),
             user: match container_config.user {
-                Some(ref user) if !user.is_empty() => Some(format!("USER {}", user)),
+                Some(ref user) if !user.is_empty() => Some(format!("USER {user}")),
                 _ => None,
             },
             health_check: match container_config.healthcheck {
@@ -39,25 +39,24 @@ impl ContainerConfigurations {
                     let mut health_check = String::from("HEALTHCHECK");
 
                     if let Some(interval) = health_check_config.interval {
-                        health_check = format!("{} --interval={}ms", health_check, interval);
+                        health_check = format!("{health_check} --interval={interval}ms");
                     }
 
                     if let Some(timeout) = health_check_config.timeout {
-                        health_check = format!("{} --timeout={}ms", health_check, timeout);
+                        health_check = format!("{health_check} --timeout={timeout}ms");
                     }
 
                     if let Some(start_period) = health_check_config.start_period {
-                        health_check =
-                            format!("{} --start-period={}ms", health_check, start_period);
+                        health_check = format!("{health_check} --start-period={start_period}ms");
                     }
 
                     if let Some(start_interval) = health_check_config.start_interval {
                         health_check =
-                            format!("{} --start-interval={}ms", health_check, start_interval);
+                            format!("{health_check} --start-interval={start_interval}ms");
                     }
 
                     if let Some(retries) = health_check_config.retries {
-                        health_check = format!("{} --retries={}", health_check, retries);
+                        health_check = format!("{health_check} --retries={retries}");
                     }
 
                     if let Some(test) = health_check_config.test {
@@ -82,7 +81,7 @@ impl ContainerConfigurations {
                         .filter_map(|env_value| {
                             env_value
                                 .split_once('=')
-                                .map(|(key, value)| format!("ENV {}={}", key, value))
+                                .map(|(key, value)| format!("ENV {key}={value}"))
                         })
                         .collect::<Vec<_>>();
 
@@ -104,7 +103,7 @@ impl ContainerConfigurations {
             self.health_check.clone(),
         ]
         .iter()
-        .filter_map(|x| x.as_ref().cloned())
+        .filter_map(std::clone::Clone::clone)
         .collect::<Vec<String>>()
         .join("\n")
     }

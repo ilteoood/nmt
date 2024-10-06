@@ -62,10 +62,7 @@ fn create_dockerfile(
 }
 
 fn print_build_step(build_info: BuildInfo) {
-    let content = build_info
-        .status
-        .or(build_info.stream)
-        .unwrap_or(String::from(""));
+    let content = build_info.status.or(build_info.stream).unwrap_or_default();
 
     println!("{content}");
 }
@@ -87,7 +84,7 @@ async fn run_build(
 }
 
 async fn pull_image(docker: &Docker, image_name: &str) {
-    let dockerfile = format!("FROM {}", image_name);
+    let dockerfile = format!("FROM {image_name}");
 
     let compressed_tar = create_compressed_tar(dockerfile.as_str());
 

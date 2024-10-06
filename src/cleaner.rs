@@ -118,7 +118,7 @@ impl<'a> Cleaner<'a> {
     /// Deletes a path
     fn delete_path(path: &PathBuf) {
         let path_location = path.display();
-        println!("Removing: {}", path_location);
+        println!("Removing: {path_location}");
         let metadata = fs::metadata(path);
 
         match metadata {
@@ -130,18 +130,18 @@ impl<'a> Cleaner<'a> {
                 };
 
                 match remove_result {
-                    Ok(_) => println!("Removed: {}", path_location),
-                    Err(err) => println!("Failed to remove: {}, {}", path_location, err),
+                    Ok(()) => println!("Removed: {path_location}"),
+                    Err(err) => println!("Failed to remove: {path_location}, {err}"),
                 }
             }
-            Err(err) => println!("Failed to remove: {}, {}", path_location, err),
+            Err(err) => println!("Failed to remove: {path_location}, {err}"),
         }
     }
 
     /// Removes empty directories
     fn remove_empty_dirs(&self) {
         match remove_empty_subdirs(&self.configurations.project_root_location) {
-            Ok(_) => println!("Removed empty directories"),
+            Ok(()) => println!("Removed empty directories"),
             Err(_) => println!("Failed to remove empty directories"),
         }
     }
@@ -153,7 +153,7 @@ impl<'a> Cleaner<'a> {
                 .configurations
                 .home_location
                 .join(".pnpm-state")
-                .to_path_buf(),
+                .clone(),
         );
         Self::delete_path(
             &self
@@ -162,7 +162,7 @@ impl<'a> Cleaner<'a> {
                 .join(".local")
                 .join("share")
                 .join("pnpm")
-                .to_path_buf(),
+                .clone(),
         );
     }
 
@@ -173,31 +173,31 @@ impl<'a> Cleaner<'a> {
                 .configurations
                 .project_root_location
                 .join("package-lock.json")
-                .to_path_buf(),
+                .clone(),
         );
         Self::delete_path(
             &self
                 .configurations
                 .project_root_location
                 .join("yarn.lock")
-                .to_path_buf(),
+                .clone(),
         );
         Self::delete_path(
             &self
                 .configurations
                 .project_root_location
                 .join("pnpm-lock.yaml")
-                .to_path_buf(),
+                .clone(),
         );
     }
 
-    /// Cleans up the node_modules directory
+    /// Cleans up the `node_modules` directory
     pub fn clean(self) {
         for path in &self.garbage {
             Self::delete_path(path);
         }
         self.remove_empty_dirs();
-        Self::delete_path(&self.configurations.home_location.join(".npm").to_path_buf());
+        Self::delete_path(&self.configurations.home_location.join(".npm").clone());
         self.delete_pnpm_cache();
         self.delete_lock_files();
     }

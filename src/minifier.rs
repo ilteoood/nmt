@@ -10,9 +10,9 @@ use std::{fs, path::PathBuf};
 
 use crate::{configurations::CliConfigurations, glob::retrieve_glob_paths};
 
-/// Retrieve JavaScript files from the node_modules directory
+/// Retrieve JavaScript files from the `node_modules` directory
 ///
-/// This function retrieves all JavaScript files from the node_modules directory
+/// This function retrieves all JavaScript files from the `node_modules` directory
 /// and returns them as a vector of `PathBuf`s.
 fn retrieve_files_by_extension(
     configurations: &CliConfigurations,
@@ -21,7 +21,7 @@ fn retrieve_files_by_extension(
     let js_glob_path = configurations
         .node_modules_location
         .join("**")
-        .join(format!("*.*{}", extension));
+        .join(format!("*.*{extension}"));
 
     let js_glob_path = js_glob_path.display();
 
@@ -73,7 +73,7 @@ pub fn minify_js(configurations: &CliConfigurations) {
 
         match transform_output {
             Ok(code) => match fs::write(&path, code) {
-                Ok(_) => println!("File minified: {}", path.display()),
+                Ok(()) => println!("File minified: {}", path.display()),
                 Err(error) => println!("Failed to write file {}: {}", path.display(), error),
             },
             Err(error) => println!("Failed to minify file {}: {}", path.display(), error),
@@ -89,9 +89,9 @@ pub fn minify_json(configurations: &CliConfigurations) {
             Ok(json_string) => match serde_json::from_str::<serde_json::Value>(&json_string) {
                 Ok(json_reader) => match serde_json::to_string(&json_reader) {
                     Ok(minified_json_string) => match fs::write(&path, minified_json_string) {
-                        Ok(_) => println!("File minified: {}", path.display()),
+                        Ok(()) => println!("File minified: {}", path.display()),
                         Err(error) => {
-                            println!("Failed to write file {}: {}", path.display(), error)
+                            println!("Failed to write file {}: {}", path.display(), error);
                         }
                     },
                     Err(error) => println!("Failed to minify file {}: {}", path.display(), error),

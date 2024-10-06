@@ -60,7 +60,7 @@ impl<'a> Visitor {
 
         [
             parent_path.join(module),
-            parent_path.join(format!("{}.js", module)),
+            parent_path.join(format!("{module}.js")),
             parent_path.join(module).join("index.js"),
         ]
         .into_iter()
@@ -85,7 +85,7 @@ impl<'a> Visitor {
     }
 
     fn is_local_module(module: &str) -> bool {
-        module.starts_with("..") || module.starts_with(".")
+        module.starts_with("..") || module.starts_with('.')
     }
 
     fn insert_module(&mut self, module: String, is_cjs: bool) -> bool {
