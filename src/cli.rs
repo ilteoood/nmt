@@ -1,18 +1,28 @@
 use nmt::module_graph::Visitor;
-use nmt::{cleaner, configurations::CliConfigurations, minifier};
+use nmt::{
+    cleaner::Cleaner,
+    configurations::{CliConfigurations, Strategy},
+    minifier,
+};
 
 fn main() {
     let configurations = &CliConfigurations::new();
 
-    let module_graph = Visitor::new(configurations).run();
+    let cleaner = match configurations.strategy {
+        Strategy::Ast => {
+            let module_graph = Visitor::new(configurations).run();
 
-    let cleaner = cleaner::Cleaner::from_module_graph(configurations, &module_graph);
+            Cleaner::from_module_graph(configurations, &module_graph)
+        }
+        Strategy::Static => Cleaner::from_static_garbage(configurations),
+    };
 
     if !configurations.dry_run {
         cleaner.clean();
     } else {
-        println!("Dry run. These are the paths that should be kept:");
-        module_graph
+        println!("Dry run. These are the paths that would be removed:");
+        cleaner
+            .retrieve_garbage()
             .iter()
             .for_each(|path| println!("{}", path.display()));
     }

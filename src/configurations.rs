@@ -10,6 +10,7 @@ use crate::glob::retrieve_glob_paths;
 const PROJECT_ROOT_LOCATION: &str = "PROJECT_ROOT_LOCATION";
 const ENTRY_POINT_LOCATION: &str = "ENTRY_POINT_LOCATION";
 const NODE_MODULES_LOCATION: &str = "NODE_MODULES_LOCATION";
+const STRATEGY: &str = "STRATEGY";
 const KEEP: &str = "KEEP";
 const HOME_LOCATION: &str = "HOME_LOCATION";
 const DRY_RUN: &str = "DRY_RUN";
@@ -21,6 +22,13 @@ const DEFAULT_HOME_DIR: &str = "~";
 const DEFAULT_ROOT_LOCATION: &str = ".";
 const DEFAULT_ENTRY_POINT_LOCATION: &str = "dist/index.js";
 const NODE_MODULES: &str = "node_modules";
+
+#[derive(strum::Display, strum::EnumString, Debug, Clone, Default)]
+pub enum Strategy {
+    #[default]
+    Static,
+    Ast,
+}
 
 /// Configuration for the CLI
 #[derive(Debug, Parser, Default)]
@@ -52,6 +60,8 @@ pub struct CliConfigurations {
     /// A list of files to ignore
     #[arg(short, long, env = KEEP, value_delimiter = ',')]
     pub keep: Option<Vec<String>>,
+    #[arg(short = 'S', long, default_value_t = Strategy::Static, env = STRATEGY)]
+    pub strategy: Strategy,
 }
 
 /// Configuration for the Docker image
@@ -131,9 +141,16 @@ impl CliConfigurations {
         let mut env = "".to_owned();
 
         [
-            (PROJECT_ROOT_LOCATION, self.project_root_location.display()),
-            (NODE_MODULES_LOCATION, self.node_modules_location.display()),
-            (HOME_LOCATION, self.home_location.display()),
+            (
+                PROJECT_ROOT_LOCATION,
+                self.project_root_location.display().to_string(),
+            ),
+            (
+                NODE_MODULES_LOCATION,
+                self.node_modules_location.display().to_string(),
+            ),
+            (HOME_LOCATION, self.home_location.display().to_string()),
+            (STRATEGY, self.strategy.to_string()),
         ]
         .iter()
         .for_each(|(env_name, value)| {
@@ -243,7 +260,7 @@ mod tests {
 
         assert_eq!(
             configurations.to_dockerfile_env(),
-            "ENV PROJECT_ROOT_LOCATION=.\nENV NODE_MODULES_LOCATION=node_modules\nENV HOME_LOCATION=~\nENV ENTRY_POINT_LOCATION=\"dist/index.js\""
+            "ENV PROJECT_ROOT_LOCATION=.\nENV NODE_MODULES_LOCATION=node_modules\nENV HOME_LOCATION=~\nENV STRATEGY=Static\nENV ENTRY_POINT_LOCATION=\"dist/index.js\""
         );
     }
 
@@ -257,7 +274,7 @@ mod tests {
 
         assert_eq!(
             configurations.to_dockerfile_env(),
-            "ENV PROJECT_ROOT_LOCATION=PROJECT_ROOT_LOCATION\nENV NODE_MODULES_LOCATION=node_modules\nENV HOME_LOCATION=~\nENV ENTRY_POINT_LOCATION=\"dist/index.js\"\nENV DRY_RUN=true\nENV KEEP=\"path/1,path/2\""
+            "ENV PROJECT_ROOT_LOCATION=PROJECT_ROOT_LOCATION\nENV NODE_MODULES_LOCATION=node_modules\nENV HOME_LOCATION=~\nENV STRATEGY=Static\nENV ENTRY_POINT_LOCATION=\"dist/index.js\"\nENV DRY_RUN=true\nENV KEEP=\"path/1,path/2\""
         );
     }
 

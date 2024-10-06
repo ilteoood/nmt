@@ -5,6 +5,60 @@ use std::{collections::HashSet, fs, path::PathBuf};
 use crate::{configurations::CliConfigurations, glob::retrieve_glob_paths};
 use remove_empty_subdirs::remove_empty_subdirs;
 
+/// List of glob patterns for garbage items to remove
+static STATIC_GARBAGE_ITEMS: &[&str] = &[
+    // folders
+    "@types",
+    "bench",
+    "browser",
+    "docs",
+    "example",
+    "examples",
+    "test",
+    "tests",
+    "benchmark",
+    "integration",
+    ".bin",
+    // extensions
+    "*.md",
+    "*.markdown",
+    "*.map",
+    "*.ts",
+    // specific files
+    "license",
+    "contributing",
+    ".nycrc",
+    "makefile",
+    ".DS_Store",
+    ".markdownlint-cli2.yaml",
+    ".editorconfig",
+    ".nvmrc",
+    "bower.json",
+    ".airtap.yml",
+    "jenkinsfile",
+    "makefile",
+    ".snyk",
+    // generic files
+    ".*ignore",
+    "*eslint*",
+    "*stylelint*",
+    "*.min.*",
+    "browser.*js",
+    ".travis.*",
+    ".coveralls.*",
+    "tsconfig.*",
+    ".prettierrc*",
+    "*.bak",
+    "karma.conf.*",
+    ".git*",
+    ".tap*",
+    ".c8*",
+    "gulpfile.*",
+    "gruntfile.*",
+    ".npm*",
+    "yarn*",
+];
+
 pub struct Cleaner<'a> {
     garbage: Vec<PathBuf>,
     configurations: &'a CliConfigurations,
@@ -37,6 +91,28 @@ impl<'a> Cleaner<'a> {
             garbage,
             configurations,
         }
+    }
+
+    pub fn from_static_garbage(configurations: &'a CliConfigurations) -> Self {
+        let mut garbage_glob = Vec::new();
+
+        for garbage_item in STATIC_GARBAGE_ITEMS {
+            let garbage_path = configurations
+                .node_modules_location
+                .join("**")
+                .join(garbage_item);
+
+            garbage_glob.push(garbage_path.display().to_string());
+        }
+
+        Cleaner {
+            garbage: retrieve_glob_paths(garbage_glob),
+            configurations,
+        }
+    }
+
+    pub fn retrieve_garbage(&self) -> &Vec<PathBuf> {
+        &self.garbage
     }
 
     /// Deletes a path
