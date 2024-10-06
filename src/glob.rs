@@ -38,7 +38,8 @@ mod tests_retrieve_glob_paths {
     use super::*;
 
     fn retrieve_tests_ilteoood() -> PathBuf {
-        PathBuf::from(env::current_dir().unwrap())
+        env::current_dir()
+            .unwrap()
             .join("tests")
             .join("node_modules")
             .join("ilteoood")
