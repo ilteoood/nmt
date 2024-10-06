@@ -16,7 +16,7 @@ fn main() {
     }
 
     if configurations.minify {
-        minifier::minify_js(&module_graph);
+        minifier::minify_js(configurations);
     } else {
         println!("Minification skipped");
     }

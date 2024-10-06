@@ -1,10 +1,32 @@
 //! Minify JavaScript files
 
 use anyhow::anyhow;
-use std::{collections::HashSet, fs, path::PathBuf, sync::Arc};
+use std::{fs, path::PathBuf, sync::Arc};
 use swc::{config, try_with_handler, BoolConfig, BoolOrDataConfig};
 use swc_common::{SourceMap, GLOBALS};
 use swc_ecma_ast::EsVersion;
+
+use crate::{configurations::CliConfigurations, glob::retrieve_glob_paths};
+
+/// Retrieve JavaScript files from the node_modules directory
+///
+/// This function retrieves all JavaScript files from the node_modules directory
+/// and returns them as a vector of `PathBuf`s.
+fn retrieve_js_files(configurations: &CliConfigurations) -> Vec<PathBuf> {
+    let js_glob_path = configurations
+        .project_root_location
+        .join("node_modules")
+        .join("**")
+        .join("*.*js");
+
+    let js_glob_path = js_glob_path.display();
+
+    retrieve_glob_paths(vec![js_glob_path.to_string()])
+        .into_iter()
+        .filter(|path| path.is_file())
+        .collect()
+}
+
 /// Build a compiler for minifying JavaScript files
 ///
 /// This function builds a compiler for minifying JavaScript files. The compiler
@@ -50,14 +72,15 @@ fn build_compiler() -> impl Fn(&PathBuf) -> Result<String, String> {
 ///
 /// This function takes a vector of `PathBuf`s and minifies each file. The
 /// minified file is then written to the same location as the original file.
-pub fn minify_js(module_graph: &HashSet<PathBuf>) {
+pub fn minify_js(configurations: &CliConfigurations) {
+    let to_minify = retrieve_js_files(configurations);
     let compiler = build_compiler();
 
-    for path in module_graph.iter() {
-        let transform_output = compiler(path);
+    for path in to_minify {
+        let transform_output = compiler(&path);
 
         match transform_output {
-            Ok(code) => match fs::write(path, code) {
+            Ok(code) => match fs::write(&path, code) {
                 Ok(_) => println!("File minified: {}", path.display()),
                 Err(error) => println!("Failed to write file {}: {}", path.display(), error),
             },
