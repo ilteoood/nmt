@@ -119,14 +119,14 @@ impl<'a> Cleaner<'a> {
     fn delete_path(path: &PathBuf) {
         let path_location = path.display();
         println!("Removing: {}", path_location);
-        let metadata = fs::metadata(&path);
+        let metadata = fs::metadata(path);
 
         match metadata {
             Ok(metadata) => {
                 let remove_result = if metadata.is_dir() {
-                    fs::remove_dir_all(&path)
+                    fs::remove_dir_all(path)
                 } else {
-                    fs::remove_file(&path)
+                    fs::remove_file(path)
                 };
 
                 match remove_result {
@@ -194,7 +194,7 @@ impl<'a> Cleaner<'a> {
     /// Cleans up the node_modules directory
     pub fn clean(self) {
         for path in &self.garbage {
-            Self::delete_path(&path);
+            Self::delete_path(path);
         }
         self.remove_empty_dirs();
         Self::delete_path(&self.configurations.home_location.join(".npm").to_path_buf());

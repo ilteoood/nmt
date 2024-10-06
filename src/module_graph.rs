@@ -59,8 +59,8 @@ impl<'a> Visitor {
         let parent_path = self.current_path.parent().unwrap();
 
         [
-            parent_path.join(&module),
-            parent_path.join(format!("{}.js", &module)),
+            parent_path.join(module),
+            parent_path.join(format!("{}.js", module)),
             parent_path.join(module).join("index.js"),
         ]
         .into_iter()
@@ -84,7 +84,7 @@ impl<'a> Visitor {
         }
     }
 
-    fn is_local_module(module: &String) -> bool {
+    fn is_local_module(module: &str) -> bool {
         module.starts_with("..") || module.starts_with(".")
     }
 

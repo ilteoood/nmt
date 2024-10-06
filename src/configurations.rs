@@ -99,13 +99,15 @@ impl CliConfigurations {
             .entry_point_location
             .iter()
             .map(|path| {
-                self.project_root_location.join(path).canonicalize().expect(
-                    format!(
-                        "Failed to canonicalize entry point location {}",
-                        path.display()
-                    )
-                    .as_str(),
-                )
+                self.project_root_location
+                    .join(path)
+                    .canonicalize()
+                    .unwrap_or_else(|_| {
+                        panic!(
+                            "Failed to canonicalize entry point location {}",
+                            path.display()
+                        )
+                    })
             })
             .collect();
 
