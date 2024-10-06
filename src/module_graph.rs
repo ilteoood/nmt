@@ -10,7 +10,7 @@ use oxc_parser::{ParseOptions, Parser};
 use oxc_resolver::{ResolveOptions, Resolver};
 use oxc_span::SourceType;
 
-use crate::configurations::CliConfigurations;
+use crate::configurations::Cli;
 
 #[derive(Debug, PartialEq, Eq, Hash)]
 struct ModuleToVisit {
@@ -26,7 +26,7 @@ pub struct Visitor {
 }
 
 impl<'a> Visitor {
-    pub fn new(configurations: &CliConfigurations) -> Self {
+    pub fn new(configurations: &Cli) -> Self {
         let initial_files = [
             configurations.keep_files(),
             configurations.entry_point_location.clone(),
@@ -242,7 +242,7 @@ mod specifier_tests {
             .join("ilteoood")
             .join("legit.esm.js");
 
-        let mut visitor = Visitor::new(&CliConfigurations {
+        let mut visitor = Visitor::new(&Cli {
             entry_point_location: vec![path.clone()],
             ..Default::default()
         });
@@ -274,7 +274,7 @@ mod specifier_tests {
             .join("ilteoood")
             .join("unlegit.min.js");
 
-        let mut visitor = Visitor::new(&CliConfigurations {
+        let mut visitor = Visitor::new(&Cli {
             entry_point_location: vec![path.clone()],
             ..Default::default()
         });
@@ -302,7 +302,7 @@ mod specifier_tests {
             .join("ilteoood")
             .join("legit.js");
 
-        let mut visitor = Visitor::new(&CliConfigurations {
+        let mut visitor = Visitor::new(&Cli {
             entry_point_location: vec![path.clone()],
             ..Default::default()
         });
@@ -347,7 +347,7 @@ mod resolve_tests {
         let tests_dir = retrieve_tests_dir();
         let path = tests_dir.join("index.js");
 
-        let mut visitor = Visitor::new(&CliConfigurations {
+        let mut visitor = Visitor::new(&Cli {
             entry_point_location: vec![path.clone()],
             ..Default::default()
         });

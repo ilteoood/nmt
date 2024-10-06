@@ -8,14 +8,14 @@ use oxc_parser::Parser;
 use oxc_span::SourceType;
 use std::{fs, path::PathBuf};
 
-use crate::{configurations::CliConfigurations, glob::retrieve_glob_paths};
+use crate::{configurations::Cli, glob::retrieve_glob_paths};
 
 /// Retrieve JavaScript files from the `node_modules` directory
 ///
 /// This function retrieves all JavaScript files from the `node_modules` directory
 /// and returns them as a vector of `PathBuf`s.
 fn retrieve_files_by_extension(
-    configurations: &CliConfigurations,
+    configurations: &Cli,
     extension: &str,
 ) -> Vec<PathBuf> {
     let js_glob_path = configurations
@@ -64,7 +64,7 @@ fn build_minifier() -> impl Fn(&PathBuf) -> Result<String, Error> {
 ///
 /// This function takes a vector of `PathBuf`s and minifies each file. The
 /// minified file is then written to the same location as the original file.
-pub fn minify_js(configurations: &CliConfigurations) {
+pub fn minify_js(configurations: &Cli) {
     let to_minify = retrieve_files_by_extension(configurations, "js");
     let minifier = build_minifier();
 
@@ -81,7 +81,7 @@ pub fn minify_js(configurations: &CliConfigurations) {
     }
 }
 
-pub fn minify_json(configurations: &CliConfigurations) {
+pub fn minify_json(configurations: &Cli) {
     let to_minify = retrieve_files_by_extension(configurations, "json");
 
     for path in to_minify {
@@ -103,7 +103,7 @@ pub fn minify_json(configurations: &CliConfigurations) {
     }
 }
 
-pub fn minify(configurations: &CliConfigurations) {
+pub fn minify(configurations: &Cli) {
     minify_js(configurations);
     minify_json(configurations);
 }

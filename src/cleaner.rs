@@ -2,7 +2,7 @@
 
 use std::{collections::HashSet, fs, path::PathBuf};
 
-use crate::{configurations::CliConfigurations, glob::retrieve_glob_paths};
+use crate::{configurations::Cli, glob::retrieve_glob_paths};
 use remove_empty_subdirs::remove_empty_subdirs;
 
 /// List of glob patterns for garbage items to remove
@@ -61,14 +61,11 @@ static STATIC_GARBAGE_ITEMS: &[&str] = &[
 
 pub struct Cleaner<'a> {
     garbage: Vec<PathBuf>,
-    configurations: &'a CliConfigurations,
+    configurations: &'a Cli,
 }
 
 impl<'a> Cleaner<'a> {
-    pub fn from_module_graph(
-        configurations: &'a CliConfigurations,
-        module_graph: &HashSet<PathBuf>,
-    ) -> Self {
+    pub fn from_module_graph(configurations: &'a Cli, module_graph: &HashSet<PathBuf>) -> Self {
         let node_modules_glob = configurations
             .project_root_location
             .join("**")
@@ -93,7 +90,7 @@ impl<'a> Cleaner<'a> {
         }
     }
 
-    pub fn from_static_garbage(configurations: &'a CliConfigurations) -> Self {
+    pub fn from_static_garbage(configurations: &'a Cli) -> Self {
         let mut garbage_glob = Vec::new();
 
         for garbage_item in STATIC_GARBAGE_ITEMS {
@@ -221,7 +218,7 @@ mod tests {
 
     #[test]
     fn test_remove_empty_dirs() {
-        let configurations = &CliConfigurations {
+        let configurations = &Cli {
             entry_point_location: vec!["tests/index.js".into()],
             ..Default::default()
         };
@@ -231,7 +228,7 @@ mod tests {
     #[test]
     fn test_clean() {
         let (node_modules_location, _, temp) = retrieve_tests_folders();
-        let configurations = &CliConfigurations {
+        let configurations = &Cli {
             project_root_location: temp.to_path_buf(),
             ..Default::default()
         };

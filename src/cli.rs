@@ -1,12 +1,12 @@
 use nmt::module_graph::Visitor;
 use nmt::{
     cleaner::Cleaner,
-    configurations::{CliConfigurations, Strategy},
+    configurations::{Cli, Strategy},
     minifier,
 };
 
 fn main() {
-    let configurations = &CliConfigurations::new();
+    let configurations = &Cli::new();
 
     let cleaner = match configurations.strategy {
         Strategy::Ast => {

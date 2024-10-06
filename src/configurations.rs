@@ -33,7 +33,7 @@ pub enum Strategy {
 /// Configuration for the CLI
 #[derive(Debug, Parser, Default)]
 #[command(version, about, long_about)]
-pub struct CliConfigurations {
+pub struct Cli {
     /// Path to the project root
     #[arg(short, long, default_value = DEFAULT_ROOT_LOCATION, env = PROJECT_ROOT_LOCATION)]
     pub project_root_location: PathBuf,
@@ -67,9 +67,9 @@ pub struct CliConfigurations {
 /// Configuration for the Docker image
 #[derive(Debug, Parser, Default)]
 #[command(version, about, long_about)]
-pub struct DockerConfigurations {
+pub struct Docker {
     #[command(flatten)]
-    pub cli: CliConfigurations,
+    pub cli: Cli,
     /// The source image
     #[arg(short, long, default_value = DEFAULT_IMAGE_NAME, env = SOURCE_IMAGE)]
     pub source_image: String,
@@ -78,7 +78,7 @@ pub struct DockerConfigurations {
     pub destination_image: String,
 }
 
-impl CliConfigurations {
+impl Cli {
     /// Returns a new configuration
     pub fn new() -> Self {
         let mut parsed = Self::parse();
@@ -193,7 +193,7 @@ impl CliConfigurations {
     }
 }
 
-impl DockerConfigurations {
+impl Docker {
     /// Sets the default destination image
     pub fn default_destination_image(&mut self) {
         if self.destination_image.is_empty() {
@@ -241,7 +241,7 @@ mod tests {
         env::set_var(PROJECT_ROOT_LOCATION, "tests");
         env::set_var(DRY_RUN, "true");
         env::set_var(ENTRY_POINT_LOCATION, "index.js");
-        let configurations = CliConfigurations::new();
+        let configurations = Cli::new();
         assert_eq!(configurations.project_root_location, PathBuf::from("tests"));
         assert_eq!(
             configurations.entry_point_location,
@@ -254,7 +254,7 @@ mod tests {
     fn test_cli_default_to_docker_env() {
         clean_cli_env();
 
-        let configurations = CliConfigurations::parse();
+        let configurations = Cli::parse();
 
         assert_eq!(
             configurations.to_dockerfile_env(),
@@ -268,7 +268,7 @@ mod tests {
         env::set_var(PROJECT_ROOT_LOCATION, "PROJECT_ROOT_LOCATION");
         env::set_var(DRY_RUN, "true");
         env::set_var(KEEP, "path/1,path/2");
-        let configurations = CliConfigurations::parse();
+        let configurations = Cli::parse();
 
         assert_eq!(
             configurations.to_dockerfile_env(),
@@ -280,7 +280,7 @@ mod tests {
     fn test_cli_keep() {
         clean_cli_env();
         env::set_var(KEEP, "path/1,path/2");
-        let configurations = CliConfigurations::parse();
+        let configurations = Cli::parse();
 
         assert_eq!(
             configurations.keep,
@@ -298,7 +298,7 @@ mod tests {
         env::set_var(SOURCE_IMAGE, source_image);
         env::set_var(ENTRY_POINT_LOCATION, "tests/index.js");
 
-        let configurations = DockerConfigurations::new();
+        let configurations = Docker::new();
 
         assert_eq!(configurations.source_image, source_image);
         assert_eq!(
@@ -318,7 +318,7 @@ mod tests {
 
         env::set_var(SOURCE_IMAGE, source_image);
 
-        let configurations = DockerConfigurations::new();
+        let configurations = Docker::new();
 
         assert_eq!(configurations.source_image, source_image);
         assert_eq!(
@@ -331,7 +331,7 @@ mod tests {
     fn test_docker_default_configurations() {
         clean_docker_env();
 
-        let configurations = DockerConfigurations::new();
+        let configurations = Docker::new();
         assert_eq!(configurations.cli.project_root_location, PathBuf::from("."));
         assert_eq!(
             configurations.cli.entry_point_location,

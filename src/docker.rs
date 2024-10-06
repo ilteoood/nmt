@@ -3,7 +3,7 @@ use bollard::secret::BuildInfo;
 use bollard::Docker;
 
 use futures_util::stream::StreamExt;
-use nmt::configurations::DockerConfigurations;
+use nmt::configurations;
 use nmt::container_configurations::ContainerConfigurations;
 
 use std::io::Write;
@@ -42,7 +42,7 @@ fn create_compressed_tar(dockerfile: &str) -> Vec<u8> {
 }
 
 fn create_dockerfile(
-    configurations: &DockerConfigurations,
+    configurations: &configurations::Docker,
     container_configurations: &ContainerConfigurations,
 ) -> String {
     format!(
@@ -104,7 +104,7 @@ async fn pull_image(docker: &Docker, image_name: &str) {
 
 async fn retrieve_config(
     docker: &Docker,
-    configurations: &DockerConfigurations,
+    configurations: &configurations::Docker,
 ) -> Result<ContainerConfigurations, bollard::errors::Error> {
     let source_image = configurations.source_image.as_str();
     pull_image(docker, source_image).await;
@@ -119,7 +119,7 @@ async fn retrieve_config(
 
 #[tokio::main]
 async fn main() -> Result<(), bollard::errors::Error> {
-    let configurations = DockerConfigurations::new();
+    let configurations = &configurations::Docker::new();
 
     let docker = Docker::connect_with_socket_defaults().unwrap();
 
@@ -147,7 +147,7 @@ async fn main() -> Result<(), bollard::errors::Error> {
 mod history_tests {
     use std::env;
 
-    use nmt::configurations::CliConfigurations;
+    use nmt::configurations::Cli;
 
     use super::*;
 
@@ -161,7 +161,7 @@ mod history_tests {
         set_env_variables();
         let container_configurations = retrieve_config(
             &Docker::connect_with_socket_defaults().unwrap(),
-            &DockerConfigurations::new(),
+            &configurations::Docker::new(),
         )
         .await
         .unwrap();
@@ -186,10 +186,10 @@ mod history_tests {
         set_env_variables();
         let container_configurations = retrieve_config(
             &Docker::connect_with_socket_defaults().unwrap(),
-            &DockerConfigurations {
+            &configurations::Docker {
                 source_image: String::from("ilteoood/xdcc-mule"),
                 destination_image: String::from("ilteoood/xdcc-mule"),
-                cli: CliConfigurations::new(),
+                cli: Cli::new(),
             },
         )
         .await
