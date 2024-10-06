@@ -38,10 +38,7 @@ fn retrieve_files_by_extension(
 fn build_minifier() -> impl Fn(&PathBuf) -> Result<String, Error> {
     let allocator = Allocator::default();
 
-    let options = MinifierOptions {
-        mangle: false,
-        compress: CompressOptions::default(),
-    };
+    let options = MinifierOptions::default();
 
     return move |path: &PathBuf| -> Result<String, Error> {
         let source_text = std::fs::read_to_string(path)?;
