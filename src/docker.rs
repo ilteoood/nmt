@@ -43,7 +43,7 @@ fn create_compressed_tar(dockerfile: &str) -> Vec<u8> {
 
 fn create_dockerfile(
     configurations: &DockerConfigurations,
-    container_configurations: ContainerConfigurations,
+    container_configurations: &ContainerConfigurations,
 ) -> String {
     format!(
         r##"FROM ilteoood/nmt as nmt_trimmer
@@ -125,7 +125,7 @@ async fn main() -> Result<(), bollard::errors::Error> {
 
     let container_config = retrieve_config(&docker, &configurations).await?;
 
-    let dockerfile = create_dockerfile(&configurations, container_config);
+    let dockerfile = create_dockerfile(&configurations, &container_config);
 
     let compressed_tar = create_compressed_tar(&dockerfile);
 
