@@ -89,6 +89,8 @@ impl Cli {
     }
 
     /// Performs post-parsing work
+    /// # Panics if the entry point location cannot be canonicalized
+    /// # Panics if the node modules location cannot be canonicalized
     pub fn post_parse(&mut self) {
         if self.home_location.display().to_string() == DEFAULT_HOME_DIR {
             self.home_location =
