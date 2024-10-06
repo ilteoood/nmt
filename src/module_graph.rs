@@ -1,7 +1,7 @@
 #![allow(clippy::print_stdout)]
 use std::{
     collections::{HashSet, VecDeque},
-    path::PathBuf,
+    path::{Path, PathBuf},
 };
 
 use oxc_allocator::Allocator;
@@ -95,9 +95,14 @@ impl<'a> Visitor {
         })
     }
 
+    fn is_file_module(module: &str) -> bool {
+        Path::new(&module).extension().map_or(false, |ext| {
+            ext.eq_ignore_ascii_case("json") || ext.eq_ignore_ascii_case("node")
+        })
+    }
+
     fn insert_module_to_visit(&mut self, module: String, is_cjs: bool) {
-        let lowercase_module = module.to_lowercase();
-        if lowercase_module.ends_with(".json") || lowercase_module.ends_with(".node") {
+        if Self::is_file_module(&module) {
             if Self::is_local_module(&module) {
                 self.add_path(self.current_path.parent().unwrap().join(module));
             } else {
