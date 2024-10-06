@@ -71,9 +71,9 @@ fn delete_lock_files(configurations: &CliConfigurations) {
     );
 }
 
-fn retrieve_garbage(
+fn retrieve_garbage<H: std::hash::BuildHasher>(
     configurations: &CliConfigurations,
-    module_graph: &HashSet<PathBuf>,
+    module_graph: &HashSet<PathBuf, H>,
 ) -> Vec<PathBuf> {
     let node_modules_glob = configurations
         .project_root_location
@@ -95,7 +95,10 @@ fn retrieve_garbage(
 }
 
 /// Cleans up the `node_modules` directory
-pub fn clean(configurations: &CliConfigurations, module_graph: &HashSet<PathBuf>) {
+pub fn clean<H: std::hash::BuildHasher>(
+    configurations: &CliConfigurations,
+    module_graph: &HashSet<PathBuf, H>,
+) {
     let garbage = retrieve_garbage(configurations, module_graph);
     for path in garbage {
         delete_path(&path);
