@@ -1,10 +1,12 @@
 //! Minify JavaScript files
 
-use anyhow::anyhow;
-use std::{fs, path::PathBuf, sync::Arc};
-use swc::{config, try_with_handler, BoolConfig, BoolOrDataConfig};
-use swc_common::{SourceMap, GLOBALS};
-use swc_ecma_ast::EsVersion;
+use anyhow::Error;
+use oxc_allocator::Allocator;
+use oxc_codegen::CodeGenerator;
+use oxc_minifier::{CompressOptions, Minifier, MinifierOptions};
+use oxc_parser::Parser;
+use oxc_span::SourceType;
+use std::{fs, path::PathBuf};
 
 use crate::{configurations::CliConfigurations, glob::retrieve_glob_paths};
 
@@ -33,40 +35,26 @@ fn retrieve_files_by_extension(
 ///
 /// This function builds a compiler for minifying JavaScript files. The compiler
 /// is configured to use the latest ECMAScript version and to minify the code.
-fn build_compiler() -> impl Fn(&PathBuf) -> Result<String, String> {
-    let cm = Arc::<SourceMap>::default();
+fn build_minifier() -> impl Fn(&PathBuf) -> Result<String, Error> {
+    let allocator = Allocator::default();
 
-    let opts = config::Options {
-        config: config::Config {
-            minify: BoolConfig::new(Some(true)),
-            jsc: config::JscConfig {
-                target: Some(EsVersion::latest()),
-                minify: Some(config::JsMinifyOptions {
-                    compress: BoolOrDataConfig::from_bool(true),
-                    mangle: BoolOrDataConfig::from_bool(true),
-                    ..Default::default()
-                }),
-                ..Default::default()
-            },
-            ..Default::default()
-        },
-        ..Default::default()
+    let options = MinifierOptions {
+        mangle: false,
+        compress: CompressOptions::default(),
     };
 
-    return move |path: &PathBuf| -> Result<String, String> {
-        let c = swc::Compiler::new(cm.clone());
-        let output = GLOBALS.set(&Default::default(), || {
-            try_with_handler(cm.clone(), Default::default(), |handler| {
-                match cm.load_file(path.as_path()) {
-                    Ok(fm) => c.process_js_file(fm, handler, &opts),
-                    Err(err) => Err(anyhow!("failed to load file: {}: {}", path.display(), err)),
-                }
-            })
-        });
+    return move |path: &PathBuf| -> Result<String, Error> {
+        let source_text = std::fs::read_to_string(path)?;
+        let source_type = SourceType::from_path(path)?;
 
-        output
-            .map(|output| output.code)
-            .map_err(|error| format!("failed to process file: {}", error))
+        let ret = Parser::new(&allocator, source_text.as_str(), source_type).parse();
+        let mut program = ret.program;
+
+        let ret = Minifier::new(options).build(&allocator, &mut program);
+        Ok(CodeGenerator::new()
+            .with_mangler(ret.mangler)
+            .build(&program)
+            .source_text)
     };
 }
 
@@ -76,10 +64,10 @@ fn build_compiler() -> impl Fn(&PathBuf) -> Result<String, String> {
 /// minified file is then written to the same location as the original file.
 pub fn minify_js(configurations: &CliConfigurations) {
     let to_minify = retrieve_files_by_extension(configurations, "js");
-    let compiler = build_compiler();
+    let minifier = build_minifier();
 
     for path in to_minify {
-        let transform_output = compiler(&path);
+        let transform_output = minifier(&path);
 
         match transform_output {
             Ok(code) => match fs::write(&path, code) {
@@ -135,11 +123,11 @@ mod tests_compile {
     fn test_compile_esm() {
         let js_path = retrieve_tests_ilteoood().join("legit.esm.js");
 
-        let compiler = build_compiler();
+        let minifier = build_minifier();
 
         assert_eq!(
-            compiler(&js_path).unwrap(),
-            "import t from\"path\";import(\"stream\"),import.meta.resolve(\"fs\");export default function(e){return\".md\"===t.extname(e)}"
+            minifier(&js_path).unwrap(),
+            "import path from \"path\";\nconst stream = import(\"stream\");\nconst fs = import.meta.resolve(\"fs\");\nexport default function(file) {\n\treturn path.extname(file) === \".md\";\n}\n"
         );
     }
 
@@ -147,11 +135,11 @@ mod tests_compile {
     fn test_compile_cjs() {
         let js_path = retrieve_tests_ilteoood().join("legit.js");
 
-        let compiler = build_compiler();
+        let minifier = build_minifier();
 
         assert_eq!(
-            compiler(&js_path).unwrap(),
-            "!function(){let e=require(\"path\");require.resolve(\"stream\"),require(\"depd\")(\"body-parser\"),e.join(require(\"module\"))}(),module.exports=function(e){return\".md\"===path.extname(e)};"
+            minifier(&js_path).unwrap(),
+            "(function() {\n\tconst path = require(\"path\");\n\tconst resolvedPath = require.resolve(\"stream\");\n\trequire(\"depd\")(\"body-parser\");\n\tpath.join(require(\"module\"));\n})(), module.exports = function(file) {\n\treturn path.extname(file) === \".md\";\n};\n"
         );
     }
 }
