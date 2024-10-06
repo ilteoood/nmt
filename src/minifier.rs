@@ -2,8 +2,8 @@
 
 use anyhow::Error;
 use oxc_allocator::Allocator;
-use oxc_codegen::CodeGenerator;
-use oxc_minifier::{CompressOptions, Minifier, MinifierOptions};
+use oxc_codegen::{CodeGenerator, CodegenOptions};
+use oxc_minifier::{Minifier, MinifierOptions};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 use std::{fs, path::PathBuf};
@@ -38,7 +38,11 @@ fn retrieve_files_by_extension(
 fn build_minifier() -> impl Fn(&PathBuf) -> Result<String, Error> {
     let allocator = Allocator::default();
 
-    let options = MinifierOptions::default();
+    let minifier_options = MinifierOptions::default();
+    let codegen_options = CodegenOptions {
+        minify: true,
+        ..Default::default()
+    };
 
     return move |path: &PathBuf| -> Result<String, Error> {
         let source_text = std::fs::read_to_string(path)?;
@@ -47,9 +51,10 @@ fn build_minifier() -> impl Fn(&PathBuf) -> Result<String, Error> {
         let ret = Parser::new(&allocator, source_text.as_str(), source_type).parse();
         let mut program = ret.program;
 
-        let ret = Minifier::new(options).build(&allocator, &mut program);
+        let ret = Minifier::new(minifier_options).build(&allocator, &mut program);
         Ok(CodeGenerator::new()
             .with_mangler(ret.mangler)
+            .with_options(codegen_options)
             .build(&program)
             .source_text)
     };
@@ -124,7 +129,7 @@ mod tests_compile {
 
         assert_eq!(
             minifier(&js_path).unwrap(),
-            "import path from \"path\";\nconst stream = import(\"stream\");\nconst fs = import.meta.resolve(\"fs\");\nexport default function(file) {\n\treturn path.extname(file) === \".md\";\n}\n"
+            "import path from \"path\";const stream=import(\"stream\");const fs=import.meta.resolve(\"fs\");export default function(d){return path.extname(d)===\".md\"}"
         );
     }
 
@@ -136,7 +141,7 @@ mod tests_compile {
 
         assert_eq!(
             minifier(&js_path).unwrap(),
-            "(function() {\n\tconst path = require(\"path\");\n\tconst resolvedPath = require.resolve(\"stream\");\n\trequire(\"depd\")(\"body-parser\");\n\tpath.join(require(\"module\"));\n})(), module.exports = function(file) {\n\treturn path.extname(file) === \".md\";\n};\n"
+            "(function(){const a=require(\"path\");const b=require.resolve(\"stream\");require(\"depd\")(\"body-parser\");a.join(require(\"module\"))})(),module.exports=function(a){return path.extname(a)===\".md\"};"
         );
     }
 }
