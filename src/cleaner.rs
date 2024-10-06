@@ -20,7 +20,7 @@ fn delete_path(path: &PathBuf) {
             };
 
             match remove_result {
-                Ok(_) => println!("Removed: {path_location}"),
+                Ok(()) => println!("Removed: {path_location}"),
                 Err(err) => println!("Failed to remove: {path_location}, {err}"),
             }
         }
@@ -31,7 +31,7 @@ fn delete_path(path: &PathBuf) {
 /// Removes empty directories
 fn remove_empty_dirs(configurations: &CliConfigurations) {
     match remove_empty_subdirs(&configurations.project_root_location) {
-        Ok(_) => println!("Removed empty directories"),
+        Ok(()) => println!("Removed empty directories"),
         Err(_) => println!("Failed to remove empty directories"),
     }
 }
