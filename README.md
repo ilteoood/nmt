@@ -121,9 +121,9 @@ Options:
 
 | image name         | size before | size after | commands                                                                                                                     |
 | ------------------ | ----------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| nodered/node-red   | 569.82 MB   | 453.79 MB  | --source-image nodered/node-red --project-root-location /usr/src/node-red --entry-point-location "node_modules/node-red/red.js" --keep "node_modules/oauth2orize/lib/**/*.*" --keep "**/*node-red/**/*.*" --keep "**/ajv/lib/refs/*.*"      |
-| nodered/node-red   | 569.82 MB   | 443.11 MB  | --source-image nodered/node-red --project-root-location /usr/src/node-red --entry-point-location "node_modules/node-red/red.js" --keep "node_modules/oauth2orize/lib/**/*.*" --keep "**/*node-red/**/*.*" --keep "**/ajv/lib/refs/*.*" --minify |
+| nodered/node-red   | 569.82 MB   | 453.79 MB  | --source-image nodered/node-red --entry-point-location "node_modules/node-red/red.js" --keep "node_modules/oauth2orize/lib/**/*.*" --keep "**/*node-red/**/*.*" --keep "**/ajv/lib/refs/*.*"      |
+| nodered/node-red   | 569.82 MB   | 454.99 MB  | --source-image nodered/node-red --entry-point-location "node_modules/node-red/red.js" --keep "node_modules/oauth2orize/lib/**/*.*" --keep "**/*node-red/**/*.*" --keep "**/ajv/lib/refs/*.*" --minify |
 | ilteoood/xdcc-mule | 176.68 MB   | 141.91 MB  | --source-image ilteoood/xdcc-mule --entry-point-location "./index.js" --keep "**/node_sqlite3.node"
-| ilteoood/xdcc-mule | 176.68 MB   | 138.9 MB  | --source-image ilteoood/xdcc-mule --entry-point-location "./index.js" --keep "**/node_sqlite3.node" --minify
+| ilteoood/xdcc-mule | 176.68 MB   | 140.18 MB  | --source-image ilteoood/xdcc-mule --entry-point-location "./index.js" --keep "**/node_sqlite3.node" --minify
 | ghost | 595.73 MB | 402.22 MB | --source-image ghost --project-root-location /var/lib/ghost/current --entry-point-location "index.js" --keep "**/node_sqlite3.node" --keep "**/bookshelf-relations/**/*.*" --keep "**/@tryghost/**/*.*" --keep "**/gscan/**/*.*" --keep "**/core/**/*.*"
 | ghost | 595.73 MB | 388.75 MB | --source-image ghost --project-root-location /var/lib/ghost/current --entry-point-location "index.js" --keep "**/node_sqlite3.node" --keep "**/bookshelf-relations/**/*.*" --keep "**/@tryghost/**/*.*" --keep "**/gscan/**/*.*" --keep "**/core/**/*.*" --minify
