@@ -98,10 +98,11 @@ impl<'a> Visitor {
     fn insert_module_to_visit(&mut self, module: String, is_cjs: bool) {
         let lowercase_module = module.to_lowercase();
         if lowercase_module.ends_with(".json") || lowercase_module.ends_with(".node") {
-            match Self::is_local_module(&module) {
-                true => self.add_path(self.current_path.parent().unwrap().join(module)),
-                false => self.insert_module(module, is_cjs),
-            };
+            if Self::is_local_module(&module) {
+                self.add_path(self.current_path.parent().unwrap().join(module));
+            } else {
+                self.insert_module(module, is_cjs);
+            }
         } else if Self::is_local_module(&module) {
             match self.retrieve_file_path(&module) {
                 Some(path) => self.add_path_to_visit(path),
