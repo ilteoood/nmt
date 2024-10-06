@@ -139,7 +139,7 @@ impl<'a> Cleaner<'a> {
     fn remove_empty_dirs(&self) {
         match remove_empty_subdirs(&self.configurations.project_root_location) {
             Ok(()) => println!("Removed empty directories"),
-            Err(_) => println!("Failed to remove empty directories"),
+            Err(err) => println!("Failed to remove empty directories: {err}"),
         }
     }
 
