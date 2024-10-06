@@ -38,19 +38,14 @@ fn remove_empty_dirs(configurations: &CliConfigurations) {
 
 /// Deletes pnpm cache
 fn delete_pnpm_cache(configurations: &CliConfigurations) {
-    delete_path(
-        &configurations
-            .home_location
-            .join(".pnpm-state")
-            .to_path_buf(),
-    );
+    delete_path(&configurations.home_location.join(".pnpm-state").clone());
     delete_path(
         &configurations
             .home_location
             .join(".local")
             .join("share")
             .join("pnpm")
-            .to_path_buf(),
+            .clone(),
     );
 }
 
@@ -60,19 +55,19 @@ fn delete_lock_files(configurations: &CliConfigurations) {
         &configurations
             .project_root_location
             .join("package-lock.json")
-            .to_path_buf(),
+            .clone(),
     );
     delete_path(
         &configurations
             .project_root_location
             .join("yarn.lock")
-            .to_path_buf(),
+            .clone(),
     );
     delete_path(
         &configurations
             .project_root_location
             .join("pnpm-lock.yaml")
-            .to_path_buf(),
+            .clone(),
     );
 }
 
@@ -99,14 +94,14 @@ fn retrieve_garbage(
     .collect()
 }
 
-/// Cleans up the node_modules directory
+/// Cleans up the `node_modules` directory
 pub fn clean(configurations: &CliConfigurations, module_graph: &HashSet<PathBuf>) {
     let garbage = retrieve_garbage(configurations, module_graph);
     for path in garbage {
         delete_path(&path);
     }
     remove_empty_dirs(configurations);
-    delete_path(&configurations.home_location.join(".npm").to_path_buf());
+    delete_path(&configurations.home_location.join(".npm").clone());
     delete_pnpm_cache(configurations);
     delete_lock_files(configurations);
 }
