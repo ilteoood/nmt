@@ -88,30 +88,28 @@ impl<'a> Visitor {
         module.starts_with("..") || module.starts_with(".")
     }
 
+    fn insert_module(&mut self, module: String, is_cjs: bool) -> bool {
+        self.modules_to_visit.insert(ModuleToVisit {
+            name: module,
+            is_cjs,
+        })
+    }
+
     fn insert_module_to_visit(&mut self, module: String, is_cjs: bool) {
         if module.ends_with(".json") || module.ends_with(".node") {
             match Self::is_local_module(&module) {
                 true => self.add_path(self.current_path.parent().unwrap().join(module)),
-                false => self.modules_to_visit.insert(ModuleToVisit {
-                    name: module,
-                    is_cjs,
-                }),
+                false => self.insert_module(module, is_cjs),
             };
         } else if Self::is_local_module(&module) {
             match self.retrieve_file_path(&module) {
                 Some(path) => self.add_path_to_visit(path),
                 None => {
-                    self.modules_to_visit.insert(ModuleToVisit {
-                        name: module,
-                        is_cjs,
-                    });
+                    self.insert_module(module, is_cjs);
                 }
             }
         } else if !module.starts_with("node:") {
-            self.modules_to_visit.insert(ModuleToVisit {
-                name: module,
-                is_cjs,
-            });
+            self.insert_module(module, is_cjs);
         }
     }
 
