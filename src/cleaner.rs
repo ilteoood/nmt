@@ -8,7 +8,7 @@ use remove_empty_subdirs::remove_empty_subdirs;
 /// Deletes a path
 fn delete_path(path: &PathBuf) {
     let path_location = path.display();
-    println!("Removing: {}", path_location);
+    println!("Removing: {path_location}");
     let metadata = fs::metadata(&path);
 
     match metadata {
@@ -20,11 +20,11 @@ fn delete_path(path: &PathBuf) {
             };
 
             match remove_result {
-                Ok(_) => println!("Removed: {}", path_location),
-                Err(err) => println!("Failed to remove: {}, {}", path_location, err),
+                Ok(_) => println!("Removed: {path_location}"),
+                Err(err) => println!("Failed to remove: {path_location}, {err}"),
             }
         }
-        Err(err) => println!("Failed to remove: {}, {}", path_location, err),
+        Err(err) => println!("Failed to remove: {path_location}, {err}"),
     }
 }
 
