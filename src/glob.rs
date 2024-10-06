@@ -4,6 +4,7 @@ use std::{collections::HashSet, path::PathBuf};
 use glob::{glob_with, MatchOptions};
 
 /// Retrieves paths using glob patterns.
+/// # Panics if the glob pattern is invalid
 pub fn retrieve_glob_paths(glob_paths: Vec<String>) -> Vec<PathBuf> {
     let glob_options = MatchOptions {
         case_sensitive: false,
