@@ -17,14 +17,14 @@ fn main() {
         Strategy::Static => Cleaner::from_static_garbage(configurations),
     };
 
-    if !configurations.dry_run {
-        cleaner.clean();
-    } else {
+    if configurations.dry_run {
         println!("Dry run. These are the paths that would be removed:");
         cleaner
             .retrieve_garbage()
             .iter()
             .for_each(|path| println!("{}", path.display()));
+    } else {
+        cleaner.clean();
     }
 
     if configurations.minify {
