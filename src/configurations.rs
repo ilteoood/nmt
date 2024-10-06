@@ -30,7 +30,7 @@ pub struct CliConfigurations {
     #[arg(short, long, default_value = DEFAULT_ROOT_LOCATION, env = PROJECT_ROOT_LOCATION)]
     pub project_root_location: PathBuf,
     /// Path to the application's entry point
-    #[arg(short, long, default_value = DEFAULT_ENTRY_POINT_LOCATION, env = ENTRY_POINT_LOCATION)]
+    #[arg(short, long, default_value = DEFAULT_ENTRY_POINT_LOCATION, env = ENTRY_POINT_LOCATION, value_delimiter = ',')]
     pub entry_point_location: Vec<PathBuf>,
     /// Path to the node_modules directory
     #[arg(
