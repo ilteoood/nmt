@@ -55,7 +55,7 @@ impl<'a> Visitor {
         vec!["node".to_owned(), "import".to_owned()]
     }
 
-    fn retrieve_file_path(&mut self, module: String) -> Option<PathBuf> {
+    fn retrieve_file_path(&mut self, module: &String) -> Option<PathBuf> {
         let parent_path = self.current_path.parent().unwrap();
 
         [
@@ -99,8 +99,14 @@ impl<'a> Visitor {
                 });
             }
         } else if Self::is_local_module(&module) {
-            if let Some(path) = self.retrieve_file_path(module) {
-                self.add_path_to_visit(path);
+            match self.retrieve_file_path(&module) {
+                Some(path) => self.add_path_to_visit(path),
+                None => {
+                    self.modules_to_visit.insert(ModuleToVisit {
+                        name: module,
+                        is_cjs,
+                    });
+                }
             }
         } else if !module.starts_with("node:") {
             self.modules_to_visit.insert(ModuleToVisit {
