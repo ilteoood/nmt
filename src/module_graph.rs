@@ -41,7 +41,7 @@ impl<'a> Visitor {
         }
     }
 
-    fn build_resolver(&mut self, is_cjs: bool) -> Resolver {
+    fn build_resolver(is_cjs: bool) -> Resolver {
         Resolver::new(ResolveOptions {
             condition_names: Self::build_condition_names(is_cjs),
             ..Default::default()
@@ -123,7 +123,7 @@ impl<'a> Visitor {
         let specifiers: Vec<ModuleToVisit> = self.modules_to_visit.drain().collect();
 
         for specifier in specifiers {
-            let resolver = self.build_resolver(specifier.is_cjs);
+            let resolver = Self::build_resolver(specifier.is_cjs);
             match resolver.resolve(&self.current_path, &specifier.name) {
                 Err(_) => {}
                 Ok(resolution) => {
