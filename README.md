@@ -33,10 +33,16 @@ Options:
           [default: .]
 
   -e, --entry-point-location <ENTRY_POINT_LOCATION>
-          Path to the node_modules directory
+          Path to the application's entry point
           
           [env: ENTRY_POINT_LOCATION=]
           [default: dist/index.js]
+
+  -n, --node-modules-location <NODE_MODULES_LOCATION>
+          Path to the `node_modules` directory
+          
+          [env: NODE_MODULES_LOCATION=]
+          [default: node_modules]
 
   -H, --home-location <HOME_LOCATION>
           Path to the home directory
@@ -53,6 +59,15 @@ Options:
           Whether to minify JS files
           
           [env: MINIFY=]
+
+  -k, --keep <KEEP>
+          A list of files to ignore
+          
+          [env: KEEP=]
+
+  -S, --strategy <STRATEGY>
+          [env: STRATEGY=]
+          [default: Static]
 
   -h, --help
           Print help (see a summary with '-h')
@@ -77,10 +92,16 @@ Options:
           [default: .]
 
   -e, --entry-point-location <ENTRY_POINT_LOCATION>
-          Path to the node_modules directory
+          Path to the application's entry point
           
           [env: ENTRY_POINT_LOCATION=]
           [default: dist/index.js]
+
+  -n, --node-modules-location <NODE_MODULES_LOCATION>
+          Path to the `node_modules` directory
+          
+          [env: NODE_MODULES_LOCATION=]
+          [default: node_modules]
 
   -H, --home-location <HOME_LOCATION>
           Path to the home directory
@@ -97,6 +118,15 @@ Options:
           Whether to minify JS files
           
           [env: MINIFY=]
+
+  -k, --keep <KEEP>
+          A list of files to ignore
+          
+          [env: KEEP=]
+
+  -S, --strategy <STRATEGY>
+          [env: STRATEGY=]
+          [default: Static]
 
   -s, --source-image <SOURCE_IMAGE>
           The source image
