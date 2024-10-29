@@ -14,10 +14,7 @@ use crate::{configurations::Cli, glob::retrieve_glob_paths};
 ///
 /// This function retrieves all JavaScript files from the `node_modules` directory
 /// and returns them as a vector of `PathBuf`s.
-fn retrieve_files_by_extension(
-    configurations: &Cli,
-    extension: &str,
-) -> Vec<PathBuf> {
+fn retrieve_files_by_extension(configurations: &Cli, extension: &str) -> Vec<PathBuf> {
     let js_glob_path = configurations
         .node_modules_location
         .join("**")
@@ -39,10 +36,6 @@ fn build_minifier() -> impl Fn(&PathBuf) -> Result<String, Error> {
     let allocator = Allocator::default();
 
     let minifier_options = MinifierOptions::default();
-    let codegen_options = CodegenOptions {
-        minify: true,
-        ..Default::default()
-    };
 
     return move |path: &PathBuf| -> Result<String, Error> {
         let source_text = std::fs::read_to_string(path)?;
@@ -51,12 +44,17 @@ fn build_minifier() -> impl Fn(&PathBuf) -> Result<String, Error> {
         let ret = Parser::new(&allocator, source_text.as_str(), source_type).parse();
         let mut program = ret.program;
 
+        let codegen_options = CodegenOptions {
+            minify: true,
+            ..Default::default()
+        };
+
         let ret = Minifier::new(minifier_options).build(&allocator, &mut program);
         Ok(CodeGenerator::new()
             .with_mangler(ret.mangler)
             .with_options(codegen_options)
             .build(&program)
-            .source_text)
+            .code)
     };
 }
 
@@ -130,7 +128,7 @@ mod tests_compile {
 
         assert_eq!(
             minifier(&js_path).unwrap(),
-            "import path from \"path\";const stream=import(\"stream\");const fs=import.meta.resolve(\"fs\");export default function(d){return path.extname(d)===\".md\"}"
+            "import path from \"path\";const stream=import(\"stream\"),fs=import.meta.resolve(\"fs\");export default function(d){return path.extname(d)===\".md\"}"
         );
     }
 
