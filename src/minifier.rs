@@ -37,6 +37,11 @@ fn build_minifier() -> impl Fn(&PathBuf) -> Result<String, Error> {
 
     let minifier_options = MinifierOptions::default();
 
+    let codegen_options = CodegenOptions {
+        minify: true,
+        ..Default::default()
+    };
+
     return move |path: &PathBuf| -> Result<String, Error> {
         let source_text = std::fs::read_to_string(path)?;
         let source_type = SourceType::from_path(path)?;
@@ -44,15 +49,10 @@ fn build_minifier() -> impl Fn(&PathBuf) -> Result<String, Error> {
         let ret = Parser::new(&allocator, source_text.as_str(), source_type).parse();
         let mut program = ret.program;
 
-        let codegen_options = CodegenOptions {
-            minify: true,
-            ..Default::default()
-        };
-
         let ret = Minifier::new(minifier_options).build(&allocator, &mut program);
         Ok(CodeGenerator::new()
             .with_mangler(ret.mangler)
-            .with_options(codegen_options)
+            .with_options(codegen_options.clone())
             .build(&program)
             .code)
     };
