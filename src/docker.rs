@@ -1,5 +1,5 @@
-use bollard::image::BuildImageOptions;
-use bollard::secret::BuildInfo;
+use bollard::query_parameters::BuildImageOptionsBuilder;
+use bollard::models::BuildInfo;
 use bollard::Docker;
 
 use futures_util::stream::StreamExt;
@@ -68,12 +68,12 @@ fn print_build_step(build_info: BuildInfo) {
 }
 
 async fn run_build(
-    build_image_options: BuildImageOptions<&str>,
+    build_image_options: bollard::query_parameters::BuildImageOptions,
     docker: &Docker,
     compressed_tar: Vec<u8>,
 ) {
     let mut image_build_stream =
-        docker.build_image(build_image_options, None, Some(compressed_tar.into()));
+        docker.build_image(build_image_options, None, Some(bollard::body_full(compressed_tar.into())));
 
     while let Some(msg) = image_build_stream.next().await {
         match msg {
@@ -89,13 +89,12 @@ async fn pull_image(docker: &Docker, image_name: &str) {
     let compressed_tar = create_compressed_tar(dockerfile.as_str());
 
     run_build(
-        BuildImageOptions {
-            dockerfile: DOCKERFILE_NAME,
-            nocache: true,
-            rm: true,
-            pull: true,
-            ..Default::default()
-        },
+        BuildImageOptionsBuilder::default()
+            .dockerfile(DOCKERFILE_NAME)
+            .nocache(true)
+            .rm(true)
+            .pull("true")
+            .build(),
         docker,
         compressed_tar,
     )
@@ -129,14 +128,13 @@ async fn main() -> Result<(), bollard::errors::Error> {
 
     let compressed_tar = create_compressed_tar(&dockerfile);
 
-    let build_image_options = BuildImageOptions {
-        dockerfile: DOCKERFILE_NAME,
-        t: &configurations.destination_image,
-        nocache: true,
-        rm: true,
-        pull: true,
-        ..Default::default()
-    };
+    let build_image_options = BuildImageOptionsBuilder::default()
+        .dockerfile(DOCKERFILE_NAME)
+        .t(configurations.destination_image.as_str())
+        .nocache(true)
+        .rm(true)
+        .pull("true")
+        .build();
 
     run_build(build_image_options, &docker, compressed_tar).await;
 
@@ -203,7 +201,7 @@ mod history_tests {
                 entry_point: Some(String::from("ENTRYPOINT [\"node\", \"index.js\"]")),
                 health_check: None,
                 user: None,
-                env: Some(String::from("ENV PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\nENV NODE_VERSION=20.17.0\nENV YARN_VERSION=1.22.22")),
+                env: Some(String::from("ENV PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\nENV NODE_VERSION=24.15.0\nENV YARN_VERSION=1.22.22")),
             }
         );
     }
