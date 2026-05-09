@@ -93,7 +93,7 @@ async fn pull_image(docker: &Docker, image_name: &str) {
             .dockerfile(DOCKERFILE_NAME)
             .nocache(true)
             .rm(true)
-            .pull(true)
+            .pull("true")
             .build(),
         docker,
         compressed_tar,
@@ -133,7 +133,7 @@ async fn main() -> Result<(), bollard::errors::Error> {
         .t(configurations.destination_image.as_str())
         .nocache(true)
         .rm(true)
-        .pull(true)
+        .pull("true")
         .build();
 
     run_build(build_image_options, &docker, compressed_tar).await;

@@ -1,4 +1,4 @@
-use bollard::models::ContainerConfig;
+use bollard::models::ImageConfig;
 
 /// Container configurations
 #[derive(Debug, PartialEq, Default)]
@@ -18,8 +18,8 @@ pub struct ContainerConfigurations {
 }
 
 impl ContainerConfigurations {
-    /// Creates a new `ContainerConfigurations` from a `ContainerConfig`
-    pub fn from_container(container_config: ContainerConfig) -> ContainerConfigurations {
+    /// Creates a new `ContainerConfigurations` from an `ImageConfig`
+    pub fn from_container(container_config: ImageConfig) -> ContainerConfigurations {
         ContainerConfigurations {
             workdir: container_config
                 .working_dir
