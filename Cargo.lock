@@ -1001,7 +1001,7 @@ dependencies = [
  "oxc_minifier",
  "oxc_parser",
  "oxc_resolver",
- "oxc_span 0.34.0",
+ "oxc_span 0.38.0",
  "remove_empty_subdirs",
  "serde_json",
  "serial_test",
