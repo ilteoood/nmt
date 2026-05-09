@@ -1,5 +1,5 @@
 use bollard::image::BuildImageOptions;
-use bollard::secret::BuildInfo;
+use bollard::models::BuildInfo;
 use bollard::Docker;
 
 use futures_util::stream::StreamExt;
