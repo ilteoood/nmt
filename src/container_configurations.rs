@@ -1,4 +1,4 @@
-use bollard::secret::ContainerConfig;
+use bollard::models::ContainerConfig;
 
 /// Container configurations
 #[derive(Debug, PartialEq, Default)]
