@@ -995,7 +995,7 @@ dependencies = [
  "flate2",
  "futures-util",
  "glob",
- "oxc_allocator 0.34.0",
+ "oxc_allocator 0.38.0",
  "oxc_ast 0.38.0",
  "oxc_codegen",
  "oxc_minifier",
