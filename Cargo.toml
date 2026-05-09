@@ -9,7 +9,7 @@ bollard = "0.17.1"
 clap = { version = "4.5.60", features = ["derive", "env", "string"] }
 dirs = "5.0.1"
 flate2 = "1.0.34"
-futures-util = "0.3.31"
+futures-util = "0.3.32"
 glob = "0.3.1"
 oxc_allocator = "0.38.0"
 oxc_ast = "0.38.0"
