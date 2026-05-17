@@ -2,7 +2,7 @@
 
 use std::path::{Path, PathBuf};
 
-use clap::{command, Parser};
+use clap::Parser;
 use dirs;
 
 use crate::glob::retrieve_glob_paths;
