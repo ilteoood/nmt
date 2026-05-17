@@ -97,7 +97,7 @@ impl<'a> Visitor {
     }
 
     fn is_file_module(module: &str) -> bool {
-        Path::new(&module).extension().map_or(false, |ext| {
+        Path::new(&module).extension().is_some_and(|ext| {
             ext.eq_ignore_ascii_case("json") || ext.eq_ignore_ascii_case("node")
         })
     }
