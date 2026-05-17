@@ -5,7 +5,8 @@ use std::{
 };
 
 use oxc_allocator::Allocator;
-use oxc_ast::{ast::Expression, Visit};
+use oxc_ast::{ast::Expression};
+use oxc_ast_visit::Visit;
 use oxc_parser::{ParseOptions, Parser};
 use oxc_resolver::{ResolveOptions, Resolver};
 use oxc_span::SourceType;

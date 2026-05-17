@@ -2,7 +2,7 @@
 
 use anyhow::Error;
 use oxc_allocator::Allocator;
-use oxc_codegen::{CodeGenerator, CodegenOptions};
+use oxc_codegen::{Codegen, CodegenOptions};
 use oxc_minifier::{Minifier, MinifierOptions};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
@@ -33,26 +33,23 @@ fn retrieve_files_by_extension(configurations: &Cli, extension: &str) -> Vec<Pat
 /// This function builds a compiler for minifying JavaScript files. The compiler
 /// is configured to use the latest ECMAScript version and to minify the code.
 fn build_minifier() -> impl Fn(&PathBuf) -> Result<String, Error> {
-    let allocator = Allocator::default();
-
-    let minifier_options = MinifierOptions::default();
-
-    let codegen_options = CodegenOptions {
-        minify: true,
-        ..Default::default()
-    };
-
     return move |path: &PathBuf| -> Result<String, Error> {
+        let allocator = Allocator::default();
         let source_text = std::fs::read_to_string(path)?;
         let source_type = SourceType::from_path(path)?;
 
         let ret = Parser::new(&allocator, source_text.as_str(), source_type).parse();
         let mut program = ret.program;
 
-        let ret = Minifier::new(minifier_options).build(&allocator, &mut program);
-        Ok(CodeGenerator::new()
-            .with_mangler(ret.mangler)
-            .with_options(codegen_options.clone())
+        let options = MinifierOptions::default();
+        let ret = Minifier::new(options).minify(&allocator, &mut program);
+        let codegen_options = CodegenOptions {
+            minify: true,
+            ..Default::default()
+        };
+        Ok(Codegen::new()
+            .with_options(codegen_options)
+            .with_scoping(ret.scoping)
             .build(&program)
             .code)
     };
@@ -128,7 +125,7 @@ mod tests_compile {
 
         assert_eq!(
             minifier(&js_path).unwrap(),
-            "import path from \"path\";const stream=import(\"stream\"),fs=import.meta.resolve(\"fs\");export default function(d){return path.extname(d)===\".md\"}"
+            "import e from\"path\";import(`stream`),import.meta.resolve(`fs`);export default function(t){return e.extname(t)===`.md`}"
         );
     }
 
@@ -140,7 +137,7 @@ mod tests_compile {
 
         assert_eq!(
             minifier(&js_path).unwrap(),
-            "(function(){const a=require(\"path\");const b=require.resolve(\"stream\");require(\"depd\")(\"body-parser\");a.join(require(\"module\"))})(),module.exports=function(a){return path.extname(a)===\".md\"};"
+            "(function(){let e=require(`path`);require.resolve(`stream`),require(`depd`)(`body-parser`),e.join(require(`module`))})(),module.exports=function(e){return path.extname(e)===`.md`};"
         );
     }
 }
