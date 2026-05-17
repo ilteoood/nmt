@@ -33,7 +33,7 @@ fn retrieve_files_by_extension(configurations: &Cli, extension: &str) -> Vec<Pat
 /// This function builds a compiler for minifying JavaScript files. The compiler
 /// is configured to use the latest ECMAScript version and to minify the code.
 fn build_minifier() -> impl Fn(&PathBuf) -> Result<String, Error> {
-    return move |path: &PathBuf| -> Result<String, Error> {
+    move |path: &PathBuf| -> Result<String, Error> {
         let allocator = Allocator::default();
         let source_text = std::fs::read_to_string(path)?;
         let source_type = SourceType::from_path(path)?;
@@ -52,7 +52,7 @@ fn build_minifier() -> impl Fn(&PathBuf) -> Result<String, Error> {
             .with_scoping(ret.scoping)
             .build(&program)
             .code)
-    };
+    }
 }
 
 /// Minify JavaScript files
