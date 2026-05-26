@@ -137,7 +137,7 @@ mod tests_compile {
 
         assert_eq!(
             minifier(&js_path).unwrap(),
-            "(function(){let e=require(`path`);require.resolve(`stream`),require(`depd`)(`body-parser`),e.join(require(`module`))})(),module.exports=function(e){return path.extname(e)===`.md`};"
+            "(function(){let e=require(\"path\");require.resolve(`stream`),require(\"depd\")(`body-parser`),e.join(require(\"module\"))})(),module.exports=function(e){return path.extname(e)===`.md`};"
         );
     }
 }
