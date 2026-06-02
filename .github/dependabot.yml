@@ -7,7 +7,7 @@ updates:
       interval: "weekly"
     labels:
       - "dependencies"
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 10
     groups:
       oxc-crates:
         patterns:
