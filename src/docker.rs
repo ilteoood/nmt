@@ -193,6 +193,12 @@ mod history_tests {
         .await
         .unwrap();
 
+        // NOTE: the hardcoded NODE_VERSION below is a fixture value pinned to whatever
+        // the `:latest` tag of `ilteoood/xdcc-mule` was at the time the test was last
+        // updated. It will break every time the upstream image is rebuilt with a new
+        // Node release (which is exactly how this test was just fixed). The proper
+        // long-term fix is to either pin the image to a digest or build a local
+        // fixture image — see follow-up notes on the PR.
         assert_eq!(
             container_configurations,
             ContainerConfigurations {
@@ -201,7 +207,7 @@ mod history_tests {
                 entry_point: Some(String::from("ENTRYPOINT [\"node\", \"index.js\"]")),
                 health_check: None,
                 user: None,
-                env: Some(String::from("ENV PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\nENV NODE_VERSION=24.15.0\nENV YARN_VERSION=1.22.22")),
+                env: Some(String::from("ENV PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\nENV NODE_VERSION=24.16.0\nENV YARN_VERSION=1.22.22")),
             }
         );
     }
