@@ -193,6 +193,9 @@ mod history_tests {
         .await
         .unwrap();
 
+        // Fixture pinned to `ilteoood/xdcc-mule:latest` at the time of
+        // the last update — breaks on every upstream image rebuild.
+        // Fix properly by pinning to a digest or building a local fixture.
         assert_eq!(
             container_configurations,
             ContainerConfigurations {
@@ -201,7 +204,7 @@ mod history_tests {
                 entry_point: Some(String::from("ENTRYPOINT [\"node\", \"index.js\"]")),
                 health_check: None,
                 user: None,
-                env: Some(String::from("ENV PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\nENV NODE_VERSION=24.15.0\nENV YARN_VERSION=1.22.22")),
+                env: Some(String::from("ENV PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\nENV NODE_VERSION=24.16.0\nENV YARN_VERSION=1.22.22")),
             }
         );
     }

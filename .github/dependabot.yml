@@ -1,7 +1,22 @@
 version: 2
+
 updates:
   - package-ecosystem: "cargo"
     directory: "/"
     schedule:
       interval: "weekly"
+    labels:
+      - "dependencies"
     open-pull-requests-limit: 10
+    groups:
+      oxc-crates:
+        patterns:
+          - "oxc*"
+        update-types:
+          - "minor"
+          - "patch"
+      dev-dependencies:
+        dependency-type: "development"
+        update-types:
+          - "minor"
+          - "patch"
