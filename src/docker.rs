@@ -193,12 +193,9 @@ mod history_tests {
         .await
         .unwrap();
 
-        // NOTE: the hardcoded NODE_VERSION below is a fixture value pinned to whatever
-        // the `:latest` tag of `ilteoood/xdcc-mule` was at the time the test was last
-        // updated. It will break every time the upstream image is rebuilt with a new
-        // Node release (which is exactly how this test was just fixed). The proper
-        // long-term fix is to either pin the image to a digest or build a local
-        // fixture image — see follow-up notes on the PR.
+        // Fixture pinned to `ilteoood/xdcc-mule:latest` at the time of
+        // the last update — breaks on every upstream image rebuild.
+        // Fix properly by pinning to a digest or building a local fixture.
         assert_eq!(
             container_configurations,
             ContainerConfigurations {
