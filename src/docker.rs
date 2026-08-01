@@ -204,7 +204,7 @@ mod history_tests {
                 entry_point: Some(String::from("ENTRYPOINT [\"node\", \"index.js\"]")),
                 health_check: None,
                 user: None,
-                env: Some(String::from("ENV PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\nENV NODE_VERSION=24.16.0\nENV YARN_VERSION=1.22.22")),
+                env: Some(String::from("ENV PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\nENV NODE_VERSION=24.18.0\nENV YARN_VERSION=1.22.22")),
             }
         );
     }
