@@ -4,26 +4,26 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-anyhow = "1.0.102"
+anyhow = "1.0.104"
 bollard = "0.21.0"
-clap = { version = "4.6.1", features = ["derive", "env", "string"] }
+clap = { version = "4.6.6", features = ["derive", "env", "string"] }
 dirs = "6.0.0"
 flate2 = "1.1.9"
-futures-util = "0.3.32"
-glob = "0.3.3"
-oxc_allocator = "0.134.0"
-oxc_ast = "0.134.0"
-oxc_ast_visit = "0.134.0"
-oxc_codegen = "0.134.0"
-oxc_minifier = "0.134.0"
-oxc_parser = "0.134.0"
-oxc_resolver = "11.20.0"
-oxc_span = "0.134.0"
+futures-util = "0.3.33"
+glob = "0.3.4"
+oxc_allocator = "0.143.0"
+oxc_ast = "0.143.0"
+oxc_ast_visit = "0.143.0"
+oxc_codegen = "0.143.0"
+oxc_minifier = "0.143.0"
+oxc_parser = "0.143.0"
+oxc_resolver = "11.24.2"
+oxc_span = "0.143.0"
 remove_empty_subdirs = "0.1.1"
-serde_json = "1.0.150"
+serde_json = "1.0.151"
 strum = { version = "0.28.0", features = ["derive"] }
 tar = "0.4.46"
-tokio = { version = "1.52.3", features = ["full"] }
+tokio = { version = "1.53.1", features = ["full"] }
 
 [dev-dependencies]
 assert_fs = "1.1.4"

@@ -5,7 +5,7 @@ use std::{
 };
 
 use oxc_allocator::Allocator;
-use oxc_ast::{ast::Expression};
+use oxc_ast::ast::Expression;
 use oxc_ast_visit::Visit;
 use oxc_parser::{ParseOptions, Parser};
 use oxc_resolver::{ResolveOptions, Resolver};
@@ -97,9 +97,9 @@ impl<'a> Visitor {
     }
 
     fn is_file_module(module: &str) -> bool {
-        Path::new(&module).extension().is_some_and(|ext| {
-            ext.eq_ignore_ascii_case("json") || ext.eq_ignore_ascii_case("node")
-        })
+        Path::new(&module)
+            .extension()
+            .is_some_and(|ext| ext.eq_ignore_ascii_case("json") || ext.eq_ignore_ascii_case("node"))
     }
 
     fn insert_module_to_visit(&mut self, module: String, is_cjs: bool) {
@@ -197,15 +197,10 @@ impl<'a> Visit<'a> for Visitor {
                 Expression::StaticMemberExpression(static_member_expression) => {
                     if it.callee.is_specific_member_access("require", "resolve") {
                         self.insert_first_argument(it, true);
-                    } else if let Expression::MetaProperty(meta_property) =
-                        &static_member_expression.object
+                    } else if matches!(&static_member_expression.object, Expression::ImportMeta(_))
+                        && it.callee_name() == Some("resolve")
                     {
-                        if meta_property.meta.name.as_str() == "import"
-                            && meta_property.property.name.as_str() == "meta"
-                            && it.callee_name() == Some("resolve")
-                        {
-                            self.insert_first_argument(it, false);
-                        }
+                        self.insert_first_argument(it, false);
                     } else {
                         self.deep_call_expression(it);
                     }
@@ -215,10 +210,8 @@ impl<'a> Visit<'a> for Visitor {
         }
     }
 
-    fn visit_export_named_declaration(&mut self, it: &oxc_ast::ast::ExportNamedDeclaration<'a>) {
-        if let Some(source) = it.source.as_ref() {
-            self.insert_module_to_visit(source.to_string(), false);
-        }
+    fn visit_export_from_declaration(&mut self, it: &oxc_ast::ast::ExportFromDeclaration<'a>) {
+        self.insert_module_to_visit(it.source.to_string(), false);
     }
 
     fn visit_export_all_declaration(&mut self, it: &oxc_ast::ast::ExportAllDeclaration<'a>) {

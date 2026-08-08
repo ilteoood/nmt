@@ -1,5 +1,5 @@
-use bollard::query_parameters::BuildImageOptionsBuilder;
 use bollard::models::BuildInfo;
+use bollard::query_parameters::BuildImageOptionsBuilder;
 use bollard::Docker;
 
 use futures_util::stream::StreamExt;
@@ -72,8 +72,11 @@ async fn run_build(
     docker: &Docker,
     compressed_tar: Vec<u8>,
 ) {
-    let mut image_build_stream =
-        docker.build_image(build_image_options, None, Some(bollard::body_full(compressed_tar.into())));
+    let mut image_build_stream = docker.build_image(
+        build_image_options,
+        None,
+        Some(bollard::body_full(compressed_tar.into())),
+    );
 
     while let Some(msg) = image_build_stream.next().await {
         match msg {
@@ -201,10 +204,10 @@ mod history_tests {
             ContainerConfigurations {
                 workdir: Some(String::from("WORKDIR /app")),
                 command: None,
-                entry_point: Some(String::from("ENTRYPOINT [\"node\", \"index.js\"]")),
+                entry_point: Some(String::from("ENTRYPOINT [\"node\", \"index.mjs\"]")),
                 health_check: None,
                 user: None,
-                env: Some(String::from("ENV PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\nENV NODE_VERSION=24.18.0\nENV YARN_VERSION=1.22.22")),
+                env: Some(String::from("ENV PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\nENV NODE_VERSION=24.19.0\nENV YARN_VERSION=1.22.22")),
             }
         );
     }
