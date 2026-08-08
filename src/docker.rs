@@ -1,5 +1,5 @@
-use bollard::query_parameters::BuildImageOptionsBuilder;
 use bollard::models::BuildInfo;
+use bollard::query_parameters::BuildImageOptionsBuilder;
 use bollard::Docker;
 
 use futures_util::stream::StreamExt;
@@ -72,8 +72,11 @@ async fn run_build(
     docker: &Docker,
     compressed_tar: Vec<u8>,
 ) {
-    let mut image_build_stream =
-        docker.build_image(build_image_options, None, Some(bollard::body_full(compressed_tar.into())));
+    let mut image_build_stream = docker.build_image(
+        build_image_options,
+        None,
+        Some(bollard::body_full(compressed_tar.into())),
+    );
 
     while let Some(msg) = image_build_stream.next().await {
         match msg {
