@@ -157,6 +157,7 @@ mod history_tests {
         env::set_var("ENTRY_POINT_LOCATION", "index.js");
     }
 
+    #[ignore = "requires docker daemon socket at /var/run/docker.sock"]
     #[tokio::test]
     async fn test_empty_container_configurations() {
         set_env_variables();
@@ -182,6 +183,7 @@ mod history_tests {
         );
     }
 
+    #[ignore = "requires docker daemon socket at /var/run/docker.sock"]
     #[tokio::test]
     async fn test_history() {
         set_env_variables();
