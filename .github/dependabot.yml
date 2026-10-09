@@ -11,14 +11,38 @@ updates:
     groups:
       oxc-crates:
         patterns:
-          - "oxc*"
+          - "oxc_allocator"
+          - "oxc_ast"
+          - "oxc_ast_visit"
+          - "oxc_codegen"
+          - "oxc_minifier"
+          - "oxc_parser"
+          - "oxc_span"
         update-types:
           - "minor"
           - "patch"
-          - "version-update"
       dev-dependencies:
         dependency-type: "development"
         update-types:
           - "minor"
           - "patch"
-          - "version-update"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+    open-pull-requests-limit: 5
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+    open-pull-requests-limit: 5
