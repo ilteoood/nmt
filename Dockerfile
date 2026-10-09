@@ -1,5 +1,4 @@
-FROM alpine:latest AS builder
-ARG TARGETARCH
+FROM alpine:3.24 AS builder
 WORKDIR /builder
 COPY . .
 RUN ./scripts/binary.sh $TARGETARCH
