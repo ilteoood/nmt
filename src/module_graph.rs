@@ -151,9 +151,8 @@ impl<'a> Visitor {
             self.resolve_modules_to_visit();
         }
 
-        self.paths_found.drain().collect()
+        std::mem::take(&mut self.paths_found)
     }
-
     fn visit_path(&mut self, path: PathBuf) {
         self.current_path = path;
 
