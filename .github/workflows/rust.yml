@@ -24,6 +24,9 @@ jobs:
       - name: Cache
         uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2
 
+      - name: Install target for the pinned toolchain
+        run: rustup target add ${{ matrix.platform.target }}
+
       - name: Build binary
         uses: houseabsolute/actions-rust-cross@21b0f18dc621b25bfae556ff2791fca4173121e8 # v1.0.8
         with:
