@@ -306,6 +306,22 @@ mod specifier_tests {
     }
 
     #[test]
+    fn test_lone_surrogate_specifier() {
+        let path = retrieve_tests_dir()
+            .join("node_modules")
+            .join("ilteoood")
+            .join("lone-surrogate.js");
+
+        let mut visitor = Visitor::new(&Cli {
+            entry_point_location: vec![path.clone()],
+            ..Default::default()
+        });
+        visitor.visit_path(path);
+
+        assert_eq!(visitor.modules_to_visit, HashSet::new());
+    }
+
+    #[test]
     fn test_cjs_specifier() {
         let path = retrieve_tests_dir()
             .join("node_modules")
