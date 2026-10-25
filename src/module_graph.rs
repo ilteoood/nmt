@@ -121,7 +121,11 @@ impl<'a> Visitor {
         }
     }
 
-    fn insert_literal_to_visit(&mut self, literal: &oxc_ast::ast::StringLiteral<'a>, is_cjs: bool) {
+    fn insert_module_from_literal(
+        &mut self,
+        literal: &oxc_ast::ast::StringLiteral<'a>,
+        is_cjs: bool,
+    ) {
         if let Some(module) = literal.value.as_str() {
             self.insert_module_to_visit(module.to_owned(), is_cjs);
         }
@@ -129,7 +133,7 @@ impl<'a> Visitor {
 
     fn insert_first_argument(&mut self, it: &oxc_ast::ast::CallExpression<'a>, is_cjs: bool) {
         if let Some(Expression::StringLiteral(lit)) = &it.arguments[0].as_expression() {
-            self.insert_literal_to_visit(lit, is_cjs);
+            self.insert_module_from_literal(lit, is_cjs);
         }
     }
 
@@ -192,12 +196,12 @@ impl<'a> Visitor {
 
 impl<'a> Visit<'a> for Visitor {
     fn visit_import_declaration(&mut self, it: &oxc_ast::ast::ImportDeclaration<'a>) {
-        self.insert_literal_to_visit(&it.source, false);
+        self.insert_module_from_literal(&it.source, false);
     }
 
     fn visit_call_expression(&mut self, it: &oxc_ast::ast::CallExpression<'a>) {
         match it.common_js_require() {
-            Some(lit) => self.insert_literal_to_visit(lit, true),
+            Some(lit) => self.insert_module_from_literal(lit, true),
             None => match &it.callee {
                 Expression::StaticMemberExpression(static_member_expression) => {
                     if it.callee.is_specific_member_access("require", "resolve") {
@@ -216,16 +220,16 @@ impl<'a> Visit<'a> for Visitor {
     }
 
     fn visit_export_from_declaration(&mut self, it: &oxc_ast::ast::ExportFromDeclaration<'a>) {
-        self.insert_literal_to_visit(&it.source, false);
+        self.insert_module_from_literal(&it.source, false);
     }
 
     fn visit_export_all_declaration(&mut self, it: &oxc_ast::ast::ExportAllDeclaration<'a>) {
-        self.insert_literal_to_visit(&it.source, false);
+        self.insert_module_from_literal(&it.source, false);
     }
 
     fn visit_import_expression(&mut self, it: &oxc_ast::ast::ImportExpression<'a>) {
         if let oxc_ast::ast::Expression::StringLiteral(source_lit) = &it.source {
-            self.insert_literal_to_visit(source_lit, false);
+            self.insert_module_from_literal(source_lit, false);
         }
     }
 }
@@ -299,6 +303,22 @@ mod specifier_tests {
                 },
             ])
         );
+    }
+
+    #[test]
+    fn test_lone_surrogate_specifier() {
+        let path = retrieve_tests_dir()
+            .join("node_modules")
+            .join("ilteoood")
+            .join("lone-surrogate.js");
+
+        let mut visitor = Visitor::new(&Cli {
+            entry_point_location: vec![path.clone()],
+            ..Default::default()
+        });
+        visitor.visit_path(path);
+
+        assert_eq!(visitor.modules_to_visit, HashSet::new());
     }
 
     #[test]
