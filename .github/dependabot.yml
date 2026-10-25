@@ -18,9 +18,6 @@ updates:
           - "oxc_minifier"
           - "oxc_parser"
           - "oxc_span"
-        update-types:
-          - "minor"
-          - "patch"
       dev-dependencies:
         dependency-type: "development"
         update-types:
