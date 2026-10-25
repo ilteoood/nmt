@@ -121,9 +121,15 @@ impl<'a> Visitor {
         }
     }
 
+    fn insert_literal_to_visit(&mut self, literal: &oxc_ast::ast::StringLiteral<'a>, is_cjs: bool) {
+        if let Some(module) = literal.value.as_str() {
+            self.insert_module_to_visit(module.to_owned(), is_cjs);
+        }
+    }
+
     fn insert_first_argument(&mut self, it: &oxc_ast::ast::CallExpression<'a>, is_cjs: bool) {
         if let Some(Expression::StringLiteral(lit)) = &it.arguments[0].as_expression() {
-            self.insert_module_to_visit(lit.value.to_string(), is_cjs);
+            self.insert_literal_to_visit(lit, is_cjs);
         }
     }
 
@@ -186,12 +192,12 @@ impl<'a> Visitor {
 
 impl<'a> Visit<'a> for Visitor {
     fn visit_import_declaration(&mut self, it: &oxc_ast::ast::ImportDeclaration<'a>) {
-        self.insert_module_to_visit(it.source.to_string(), false);
+        self.insert_literal_to_visit(&it.source, false);
     }
 
     fn visit_call_expression(&mut self, it: &oxc_ast::ast::CallExpression<'a>) {
         match it.common_js_require() {
-            Some(lit) => self.insert_module_to_visit(lit.value.to_string(), true),
+            Some(lit) => self.insert_literal_to_visit(lit, true),
             None => match &it.callee {
                 Expression::StaticMemberExpression(static_member_expression) => {
                     if it.callee.is_specific_member_access("require", "resolve") {
@@ -210,16 +216,16 @@ impl<'a> Visit<'a> for Visitor {
     }
 
     fn visit_export_from_declaration(&mut self, it: &oxc_ast::ast::ExportFromDeclaration<'a>) {
-        self.insert_module_to_visit(it.source.to_string(), false);
+        self.insert_literal_to_visit(&it.source, false);
     }
 
     fn visit_export_all_declaration(&mut self, it: &oxc_ast::ast::ExportAllDeclaration<'a>) {
-        self.insert_module_to_visit(it.source.to_string(), false);
+        self.insert_literal_to_visit(&it.source, false);
     }
 
     fn visit_import_expression(&mut self, it: &oxc_ast::ast::ImportExpression<'a>) {
         if let oxc_ast::ast::Expression::StringLiteral(source_lit) = &it.source {
-            self.insert_module_to_visit(source_lit.value.to_string(), false);
+            self.insert_literal_to_visit(source_lit, false);
         }
     }
 }
